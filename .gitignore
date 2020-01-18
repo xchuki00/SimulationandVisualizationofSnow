@@ -1,2 +1,7 @@
 /.idea
-/.build
+/Build
+/.vs
+!/SimulationAndVisualizationOfSnow
+/SimulationAndVisualizationOfSnow/*
+!/SimulationAndVisualizationOfSnow/src
+!/SimulationAndVisualizationOfSnow/SimulationAndVisualizationOfSnow.*

@@ -1,0 +1,3 @@
+[submodule "smallupbp"]
+	path = smallubp
+	url = https://github.com/PetrVevoda/smallupbp.git

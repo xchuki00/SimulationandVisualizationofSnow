@@ -108,13 +108,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\smallubpb\embree-2.0\embree\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\smallupbp\embree-2.0\embree\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>../smallubpb/OpenEXR/OpenEXR-dbg.lib;$(OutDir)/sys.lib;$(OutDir)/embree.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../smallupbp/OpenEXR/OpenEXR-dbg.lib;$(OutDir)/sys.lib;$(OutDir)/embree.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -75,14 +75,16 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)..\Build\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)..\Build\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -105,16 +107,17 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>
+      </SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\smallupbp\embree-2.0\embree\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\smallupbp\SmallUPBP\src\;$(SolutionDir)..\smallupbp\embree-2.0\embree\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>../smallupbp/OpenEXR/OpenEXR-dbg.lib;$(OutDir)/sys.lib;$(OutDir)/embree.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../smallupbp/OpenEXR/OpenEXR-dbg.lib;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\sys.lib;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\embree.lib;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\Bre.obj;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\Geometry.obj;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\ObjReader.obj;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\PhBeams.obj;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -144,19 +147,31 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <SDLCheck>
+      </SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\smallupbp\SmallUPBP\src\;$(SolutionDir)..\smallupbp\embree-2.0\embree\</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>../smallupbp/OpenEXR/OpenEXR.lib;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\sys.lib;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\embree.lib;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\Bre.obj;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\Geometry.obj;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\ObjReader.obj;$(SolutionDir)..\Build\$(SolutionName)\$(Platform)\$(Configuration)\PhBeams.obj;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="SimulationAndVisualizationOfSnow.cpp" />
+    <ClCompile Include="src\PTPBBeams.cxx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\PTBP.hxx" />
+    <ClInclude Include="src\PTBPBeams.hxx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

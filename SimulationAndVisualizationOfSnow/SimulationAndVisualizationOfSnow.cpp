@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "src/PTBP.hxx"
+#include "src/PTPB.hxx"
 #include "Bre\EmbreeAcc.hxx"
 #include "Misc\Config.hxx"
 
@@ -15,9 +15,9 @@ AbstractRenderer* getPTPB(
 
 	std::cout << "TEST: " << aConfig.mAlgorithm << std::endl;
 	const Scene& scene = *aConfig.mScene;
-	return new PTBP(
+	return new PTPB(
 		scene, 
-		PTBP::kCustom, 
+	PTPB::AlgorithmType::kCustom,
 		aConfig.mAlgorithmFlags, 
 		aConfig.mQueryBeamType,
 		aConfig.mBB1DRadiusInitial, 
@@ -37,26 +37,6 @@ AbstractRenderer* getPTPB(
 
 	/*return new PTBP(scene, aSeed, PTBP::kPointBeam2D, aConfig.mPB2DRadiusInitial, aConfig.mPB2DRadiusAlpha, aConfig.mPB2DRadiusCalculation, aConfig.mPB2DRadiusKNN, aConfig.mQueryBeamType,
 		aConfig.mBB1DRadiusInitial, aConfig.mBB1DRadiusAlpha, aConfig.mBB1DRadiusCalculation, aConfig.mBB1DRadiusKNN, aConfig.mPhotonBeamType, aConfig.mBB1DUsedLightSubPathCount, aConfig.mRefPathCountPerIter);*/
-}
-//Prevzato z SmallUPBP, autor Petr Vévoda
-// Output image in continuous outputting
-void continuousOutput(const Config& aConfig, int iter, Framebuffer& accumFrameBuffer, Framebuffer& outputFrameBuffer, AbstractRenderer* renderer, const std::string& name, const std::string& ext, char* filename)
-{
-	if (aConfig.mContinuousOutput > 0)
-	{
-		accumFrameBuffer.Add(renderer->GetFramebufferUnscaled());
-		renderer->GetFramebufferUnscaled().Clear();
-		if (iter % aConfig.mContinuousOutput == 0)
-		{
-			outputFrameBuffer.Clear();
-			outputFrameBuffer.AddScaled(accumFrameBuffer, 1.0f / iter);
-
-
-			sprintf_s(filename, 1024, "%s-%d.%s", name.c_str(), iter, ext.c_str());
-			//// Saves the image
-			outputFrameBuffer.Save(filename);
-		}
-	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -114,7 +94,6 @@ float render(
 #pragma omp critical
 			{
 				iter++; // counts number of iterations
-				continuousOutput(aConfig, iter, accumFrameBuffer, outputFrameBuffer, renderers[threadId], name, ext, filename);
 			}
 		}
 	}
@@ -136,7 +115,6 @@ float render(
 					p = percent;
 					std::cout << percent << "%" << std::endl;
 				}
-				continuousOutput(aConfig, cnt, accumFrameBuffer, outputFrameBuffer, renderers[threadId], name, ext, filename);
 			}
 		}
 		iter = aConfig.mIterations;

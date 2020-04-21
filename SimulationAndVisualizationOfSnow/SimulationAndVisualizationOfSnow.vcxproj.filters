@@ -23,11 +23,17 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\PTBP.hxx">
-      <Filter>Zdrojové soubory</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PTBPBeams.hxx">
+    <ClInclude Include="src\PTPBBeam.hxx">
       <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PTPBGrid.hxx">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PTPBBeams.hxx">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PTPB.hxx">
+      <Filter>Zdrojové soubory</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

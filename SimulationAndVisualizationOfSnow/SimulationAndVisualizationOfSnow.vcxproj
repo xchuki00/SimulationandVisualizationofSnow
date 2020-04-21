@@ -170,8 +170,10 @@
     <ClCompile Include="src\PTPBBeams.cxx" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\PTBP.hxx" />
-    <ClInclude Include="src\PTBPBeams.hxx" />
+    <ClInclude Include="src\PTPBGrid.hxx" />
+    <ClInclude Include="src\PTPB.hxx" />
+    <ClInclude Include="src\PTPBBeams.hxx" />
+    <ClInclude Include="src\PTPBBeam.hxx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,4 +1,4 @@
-#include "PTBPBeams.hxx"
+#include "PTPBBeams.hxx"
 #include "Misc\Timer.hxx"
 #include "Misc\KdTmpl.hxx"
 
@@ -21,9 +21,9 @@ typedef KdTreeTmplPtr< Pos, Pos > KdTree;
 
 const float MAX_FLOAT_SQUARE_ROOT = std::sqrtf(std::numeric_limits< float >::max()); //!< The maximum float square root
 
-uint PTBPEvaluator::sGridSize = 256;     //!< Size of the grid.
-uint PTBPEvaluator::sMaxBeamsInCell = 0; //!< Maximum number of tested beams in a single cell. 0 means no restriction.
-uint PTBPEvaluator::sReductionType = 0;  //!< Type of the reduction of numbers of tested beams in cells.	
+uint PTPBEvaluator::sGridSize = 256;     //!< Size of the grid.
+uint PTPBEvaluator::sMaxBeamsInCell = 0; //!< Maximum number of tested beams in a single cell. 0 means no restriction.
+uint PTPBEvaluator::sReductionType = 0;  //!< Type of the reduction of numbers of tested beams in cells.	
  
 // ----------------------------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ uint PTBPEvaluator::sReductionType = 0;  //!< Type of the reduction of numbers o
  * 								calculation of cone radius at the current beam vertex.
  * @param	verbose			 	Whether to print information about progress.
  */
-void PTBPEvaluator::build(PhotonBeamsArray & beams,
+void PTPBEvaluator::build(PTPBBeamsArray & beams,
 	RadiusCalculation radiusCalculation,
 	const float beamRadius,
 	const int knn,
@@ -63,7 +63,7 @@ void PTBPEvaluator::build(PhotonBeamsArray & beams,
 	}
 
 	// Define radius of each beam
-	for (PhotonBeamsArray::iterator it = beams.begin(); it != beams.end(); ++it)
+	for (PTPBBeamsArray::iterator it = beams.begin(); it != beams.end(); ++it)
 	{
 		if (radiusCalculation == KNN_RADIUS)
 		{
@@ -100,7 +100,7 @@ void PTBPEvaluator::build(PhotonBeamsArray & beams,
 	timer.Start();
 
 
-	accelStruct = new AccelStruct();
+	accelStruct = new PTPBAccelStruct();
 	UPBP_ASSERT(accelStruct != nullptr);
 #ifdef USE_GRID
 	accelStruct->setGridSize(sGridSize);
@@ -126,7 +126,7 @@ void PTBPEvaluator::build(PhotonBeamsArray & beams,
 /**
  * @brief	Destroys the data structure for Beam-Beam queries.
  */
-void PTBPEvaluator::destroy( ) 
+void PTPBEvaluator::destroy( ) 
 {
 	delete accelStruct;
 	accelStruct = nullptr;
@@ -148,10 +148,11 @@ void PTBPEvaluator::destroy( )
  *
  * @return	The accumulated radiance along the ray.
  */
-Rgb PTBPEvaluator::evalBeamBeamEstimate(
+Rgb PTPBEvaluator::evalBeamBeamEstimate(
 	BeamType beamType,
 	const Ray& queryRay,
 	const VolumeSegments& segments,
+	float rayTime,
 	const uint estimatorTechniques,
 	const uint raySamplingFlags,
 	embree::AdditionalRayDataForMis* additionalRayDataForMis,
@@ -159,7 +160,7 @@ Rgb PTBPEvaluator::evalBeamBeamEstimate(
 {
 	UPBP_ASSERT(estimatorTechniques & BB1D);
 	UPBP_ASSERT(raySamplingFlags == 0 || raySamplingFlags == AbstractMedium::kOriginInMedium);
-	
+
 	Rgb result(0);
 
 	Rgb attenuation(1);
@@ -172,12 +173,13 @@ Rgb PTBPEvaluator::evalBeamBeamEstimate(
 	for (VolumeSegments::const_iterator it = segments.begin(); it != segments.end(); ++it)
 	{
 		// Get segment medium
-		const AbstractMedium * medium = scene.mMedia[it->mMediumID];
-		
+		const AbstractMedium* medium = scene.mMedia[it->mMediumID];
+
 		// Accumulate
 		Rgb segmentResult(0);
 		if (medium->HasScattering())
 		{
+
 			if (additionalRayDataForMis)
 			{
 				additionalRayDataForMis->mRaySamplePdf = raySamplePdf;
@@ -186,14 +188,16 @@ Rgb PTBPEvaluator::evalBeamBeamEstimate(
 				if (it == segments.begin())
 					additionalRayDataForMis->mRaySamplingFlags |= raySamplingFlags;
 			}
-			segmentResult = accelStruct->evalBeamBeamEstimate(queryRay, beamType | estimatorTechniques, medium, it->mDistMin, it->mDistMax, *gridStats, additionalRayDataForMis);
+			segmentResult = accelStruct->evalBeamBeamEstimate(queryRay, beamType | estimatorTechniques, medium, it->mDistMin, it->mDistMax,rayTime, *gridStats, additionalRayDataForMis);
+
 		}
+
 		// Add to total result
 		result += attenuation * segmentResult;
 
 		if (additionalRayDataForMis)
 		{
-			DebugImages & debugImages = *static_cast<DebugImages *>(additionalRayDataForMis->mDebugImages);
+			DebugImages& debugImages = *static_cast<DebugImages*>(additionalRayDataForMis->mDebugImages);
 			debugImages.accumRgb2ToRgb(DebugImages::BB1D, attenuation);
 			debugImages.ResetAccum2();
 		}
@@ -212,6 +216,77 @@ Rgb PTBPEvaluator::evalBeamBeamEstimate(
 	UPBP_ASSERT(!result.isNanInfNeg());
 
 	return result;
+
+}
+
+Rgb PTPBEvaluator::evalBeamBeamEstimate(
+	BeamType beamType,
+	const Ray& queryRay,
+	const LiteVolumeSegments& segments,
+	float rayTime,
+	const uint estimatorTechniques,
+	const uint raySamplingFlags,
+	embree::AdditionalRayDataForMis* additionalRayDataForMis,
+	GridStats* gridStats)
+{
+	UPBP_ASSERT(beamType == LONG_BEAM);
+	UPBP_ASSERT(estimatorTechniques & BB1D);
+	UPBP_ASSERT(raySamplingFlags == 0 || raySamplingFlags == AbstractMedium::kOriginInMedium);
+
+	Rgb result(0);
+
+	Rgb attenuation(1);
+	float raySamplePdf = 1.0f;
+	float raySampleRevPdf = 1.0f;
+	GridStats _gridStats;
+	if (!gridStats) gridStats = &_gridStats;
+
+	/// Accumulate for each segment
+	for (LiteVolumeSegments::const_iterator it = segments.begin(); it != segments.end(); ++it)
+	{
+		// Get segment medium
+		const AbstractMedium* medium = scene.mMedia[it->mMediumID];
+
+		// Accumulate
+		Rgb segmentResult(0);
+		if (medium->HasScattering())
+		{
+			if (additionalRayDataForMis)
+			{
+				additionalRayDataForMis->mRaySamplePdf = raySamplePdf;
+				additionalRayDataForMis->mRaySampleRevPdf = raySampleRevPdf;
+				additionalRayDataForMis->mRaySamplingFlags = AbstractMedium::kEndInMedium;
+				if (it == segments.begin())
+					additionalRayDataForMis->mRaySamplingFlags |= raySamplingFlags;
+			}
+			segmentResult = accelStruct->evalBeamBeamEstimate(queryRay, beamType | estimatorTechniques, medium, it->mDistMin, it->mDistMax, rayTime, *gridStats, additionalRayDataForMis);
+		}
+
+		// Add to total result
+		result += attenuation * segmentResult;
+
+		if (additionalRayDataForMis)
+		{
+			DebugImages& debugImages = *static_cast<DebugImages*>(additionalRayDataForMis->mDebugImages);
+			debugImages.accumRgb2ToRgb(DebugImages::BB1D, attenuation);
+			debugImages.ResetAccum2();
+		}
+
+		// Update attenuation
+		attenuation *= medium->EvalAttenuation(queryRay, it->mDistMin, it->mDistMax);
+		if (!attenuation.isPositive())
+			return result;
+
+		// Update PDFs
+		float segmentRaySampleRevPdf;
+		float segmentRaySamplePdf = medium->RaySamplePdf(queryRay, it->mDistMin, it->mDistMax, it == segments.begin() ? raySamplingFlags : 0, &segmentRaySampleRevPdf);
+		raySamplePdf *= segmentRaySamplePdf;
+		raySampleRevPdf *= segmentRaySampleRevPdf;
+	}
+
+	UPBP_ASSERT(!result.isNanInfNeg());
+
+	return result;
 }
 
 
@@ -223,7 +298,7 @@ Rgb PTBPEvaluator::evalBeamBeamEstimate(
  *
  * @return	The beam selection PDF.
  */
-float PTBPEvaluator::getBeamSelectionPdf(const Pos & pos) const
+float PTPBEvaluator::getBeamSelectionPdf(const Pos & pos) const
 {
 	return accelStruct->getBeamSelectionPdf(pos);
 }

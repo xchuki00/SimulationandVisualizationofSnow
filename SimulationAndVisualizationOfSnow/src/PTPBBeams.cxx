@@ -189,20 +189,13 @@ Rgb PTPBEvaluator::evalBeamBeamEstimate(
 					additionalRayDataForMis->mRaySamplingFlags |= raySamplingFlags;
 			}
 			segmentResult = accelStruct->evalBeamBeamEstimate(queryRay, beamType | estimatorTechniques, medium, it->mDistMin, it->mDistMax,rayTime, *gridStats, additionalRayDataForMis);
-
+			
 		}
 
 		// Add to total result
 		result += attenuation * segmentResult;
-
-		if (additionalRayDataForMis)
-		{
-			DebugImages& debugImages = *static_cast<DebugImages*>(additionalRayDataForMis->mDebugImages);
-			debugImages.accumRgb2ToRgb(DebugImages::BB1D, attenuation);
-			debugImages.ResetAccum2();
-		}
-
 		// Update attenuation
+
 		attenuation *= beamType == SHORT_BEAM ? it->mAttenuation / it->mRaySamplePdf :  // Short beams - no attenuation
 			it->mAttenuation;
 		if (!attenuation.isPositive())
@@ -260,17 +253,11 @@ Rgb PTPBEvaluator::evalBeamBeamEstimate(
 					additionalRayDataForMis->mRaySamplingFlags |= raySamplingFlags;
 			}
 			segmentResult = accelStruct->evalBeamBeamEstimate(queryRay, beamType | estimatorTechniques, medium, it->mDistMin, it->mDistMax, rayTime, *gridStats, additionalRayDataForMis);
+
 		}
 
 		// Add to total result
 		result += attenuation * segmentResult;
-
-		if (additionalRayDataForMis)
-		{
-			DebugImages& debugImages = *static_cast<DebugImages*>(additionalRayDataForMis->mDebugImages);
-			debugImages.accumRgb2ToRgb(DebugImages::BB1D, attenuation);
-			debugImages.ResetAccum2();
-		}
 
 		// Update attenuation
 		attenuation *= medium->EvalAttenuation(queryRay, it->mDistMin, it->mDistMax);

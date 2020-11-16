@@ -202,7 +202,6 @@ public:
 		// and light paths
 		mScreenPixelCount = float(pathCountC);
 		mLightSubPathCount = mPathCountPerIter;
-		std::cout << "techniques: " << mEstimatorTechniques << std::endl;
 		if (!(mEstimatorTechniques & SPECULAR_ONLY))
 		{
 			// To make list of photons and beams same in previous and compatible mode
@@ -502,7 +501,6 @@ public:
 				// Medium of the previous vertex
 				const AbstractMedium* lastMedium = NULL;
 
-				bool onlySpecSurf = (mEstimatorTechniques & (PREVIOUS | COMPATIBLE)) != 0;
 				bool stopBB1D = false;
 				float distance = 0;
 				//////////////////////////////////////////////////////////////////////
@@ -529,9 +527,6 @@ public:
 							const Rgb contrib = Evaluator.evalBeamBeamEstimate(BeamType::LONG_BEAM, ray, mVolumeSegments,distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 							const Rgb mult = cameraState.mThroughput * mBB1DNormalization;
 							color += mult * contrib;
-							////std::cout << "contrib: " << contrib << std::endl;
-							//std::cout << "MULT: " << mult << std::endl;
-							//std::cout << "COLOR: " << color << std::endl;
 						}
 
 						// We cannot end yet
@@ -605,10 +600,11 @@ public:
 						// Accumulate contribution
 						color += cameraState.mThroughput *
 							GetLightRadiance(mScene.GetBackground(), cameraState, Pos(0));
+
+
 						const Rgb debugRgb = cameraState.mThroughput * mDebugImages.getTempRGB();
 						break;
 					}
-
 					UPBP_ASSERT(isect.IsValid());
 
 
@@ -627,10 +623,8 @@ public:
 						else
 							contrib = Evaluator.evalBeamBeamEstimate(BeamType::LONG_BEAM, ray, mLiteVolumeSegments, distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 						const Rgb mult = cameraState.mThroughput * mBB1DNormalization;
+
 						color += mult * contrib;
-				/*		std::cout << "BB1 contrib: " << contrib << std::endl;
-						std::cout << "MULT: " << mult << std::endl;
-						std::cout << "COLOR: " << color << std::endl;*/
 						mDebugImages.addAccumulatedLightSample(cameraState.mPathLength, DebugImages::BB1D, screenSample, mult);
 					}
 
@@ -735,7 +729,6 @@ public:
 						UPBP_ASSERT(light);
 
 						// Add its contribution
-						mDebugImages.ResetTemp();
 						const Rgb contrib = cameraState.mThroughput *
 							GetLightRadiance(light, cameraState, hitPoint);
 						color += contrib;
@@ -753,7 +746,7 @@ public:
 					{
 						////////////////////////////////////////////////////////////////
 						// Vertex connection: Connect to a light source
-						if (mConnectToLightSource && !bsdf.IsDelta() && cameraState.mPathLength + 1 >= mMinPathLength && mScene.GetLightCount() > 0 && (bsdf.IsInMedium() || !onlySpecSurf))
+						if (mConnectToLightSource && !bsdf.IsDelta() && cameraState.mPathLength + 1 >= mMinPathLength && mScene.GetLightCount() > 0 && (bsdf.IsInMedium()))
 						{
 							color += cameraState.mThroughput *
 								DirectIllumination(cameraState, hitPoint, bsdf);
@@ -761,7 +754,7 @@ public:
 
 						////////////////////////////////////////////////////////////////
 						// Vertex connection: Connect to light vertices
-						if (mConnectToLightVertices && !bsdf.IsDelta() && !mLightVertices.empty() && (bsdf.IsInMedium() || !onlySpecSurf))
+						if (mConnectToLightVertices && !bsdf.IsDelta() && !mLightVertices.empty() && (bsdf.IsInMedium()))
 						{
 							// Determine whether the vertex is in medium behind real geometry
 							bool behindSurf = false;
@@ -813,8 +806,6 @@ public:
 								const Rgb mult = cameraState.mThroughput * lightVertex.mThroughput;
 								auto conn = ConnectVertices(lightVertex, bsdf, hitPoint, cameraState);
 								color += mult * conn;
-								//std::cout << "CONN: " << conn << std::endl;
-								//std::cout << "MULT: "<<mult << std::endl;
 							}
 						}
 
@@ -828,7 +819,7 @@ public:
 					{
 						if (!cameraState.mLastSpecular)
 						{
-							if (onlySpecSurf || (mEstimatorTechniques & SPECULAR_ONLY))
+							if ((mEstimatorTechniques & SPECULAR_ONLY))
 								break;
 
 							if (mEstimatorTechniques & BB1D_PREVIOUS)
@@ -842,23 +833,12 @@ public:
 						if (mEstimatorTechniques & SPECULAR_ONLY)
 							break;
 
-						if (onlySpecSurf)
-						{
-							if (mEstimatorTechniques & COMPATIBLE)
-								onlySpecSurf = false;
-							else
-								break;
-						}
-
 						if (mEstimatorTechniques & BB1D_PREVIOUS)
 							stopBB1D = true;
 
 						lastMedium = bsdf.GetMedium();
 					}
 				}
-				//if (color.isPositive()) {
-				//	std::cout << "color: " << color << std::endl;
-				//}
 				mFramebuffer.AddColor(screenSample, color);
 			}
 

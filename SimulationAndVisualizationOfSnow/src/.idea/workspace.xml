@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated />
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="08b72a22-139a-4fa0-a98a-2dfe6658abda" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../SimulationAndVisualizationOfSnow.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../SimulationAndVisualizationOfSnow.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PTPB.hxx" beforeDir="false" afterPath="$PROJECT_DIR$/PTPB.hxx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PTPBBeam.hxx" beforeDir="false" afterPath="$PROJECT_DIR$/PTPBBeam.hxx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PTPBBeams.cxx" beforeDir="false" afterPath="$PROJECT_DIR$/PTPBBeams.cxx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PTPBBeams.hxx" beforeDir="false" afterPath="$PROJECT_DIR$/PTPBBeams.hxx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PTPBGrid.hxx" beforeDir="false" afterPath="$PROJECT_DIR$/PTPBGrid.hxx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/README.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/compatible_all.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/compatible_all_prevbb1d.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/compatible_bb1d.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/compatible_bpt.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/compatible_pb2d.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/compatible_pp3d.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/generate_report.bat" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/batches/generate_report.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/pp3d.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/previous_bb1d.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/previous_bpt.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/previous_pb2d.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/previous_pp3d.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/run_reference.bat" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/batches/run_reference.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/run_specular.bat" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/batches/run_specular.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/run_techniques.bat" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/batches/run_techniques.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/run_temp.bat" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/batches/run_temp.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2-100.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2-200.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2-300.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2-400.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2-500.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2-600.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2-700.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_BB1D_UNWEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_BB1D_WEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_BPT_UNWEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_BPT_WEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_PB2D_UNWEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_PB2D_WEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_PP3D_UNWEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_PP3D_WEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_SPM_UNWEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_SPM_WEIGHTED.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_WEIGHT_BB1D.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_WEIGHT_BPT.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_WEIGHT_PB2D.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_WEIGHT_PP3D.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/t2_WEIGHT_SPM.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/upbp_bpt.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/batches/vptd.exr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow - kopie.mtl" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/snow - kopie.mtl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow-backuo.obj" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow-new.mtl" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/snow-new.mtl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow-new.obj" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/snow-new.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow-old.obj" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/snow-old.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow.blend" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/snow.blend" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow.blend1" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/snow.blend1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow.mtl" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/snow.mtl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow.obj" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/snow.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../scenes/snow/snow.obj.aux" beforeDir="false" afterPath="$PROJECT_DIR$/../../scenes/snow/snow.obj.aux" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../smallupbp" beforeDir="false" afterPath="$PROJECT_DIR$/../../smallupbp" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="ProjectId" id="1jhofrvelwe9cFOeFoAIKKYwHtR" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="cf.first.check.clang-format" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="nodejs_package_manager_path" value="npm" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="08b72a22-139a-4fa0-a98a-2dfe6658abda" name="Default Changelist" comment="" />
+      <created>1604265790823</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1604265790823</updated>
+      <workItem from="1604265791975" duration="1314000" />
+      <workItem from="1604855427855" duration="1028000" />
+      <workItem from="1604878271252" duration="836000" />
+      <workItem from="1605378930699" duration="1219000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="774" y="467" width="428" height="170" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1604271498364">
+      <screen x="67" y="27" width="1853" height="1053" />
+    </state>
+    <state x="774" y="467" width="428" height="170" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/67.27.1853.1053/1920.0.1920.1080@67.27.1853.1053" timestamp="1604271498364" />
+  </component>
+</project>

@@ -13,7 +13,6 @@ AbstractRenderer* getPTPB(
 	const int     aSeed,
 	const int     aBaseSeed) {
 
-	std::cout << "TEST: " << aConfig.mAlgorithm << std::endl;
 	const Scene& scene = *aConfig.mScene;
 	return new PTPB(
 		scene, 
@@ -46,12 +45,10 @@ float render(
 	const Config& aConfig,
 	int* oUsedIterations = NULL)
 {
-	std::cout<<"TEST: " << aConfig.mScene->mMedia.size() << std::endl;
 
 	// Don't use more threads than iterations (in case of rendering limited by number of iterations not time)
 	int usedThreads = aConfig.mNumThreads;
 	if (aConfig.mMaxTime <= 0) usedThreads = std::min(usedThreads, aConfig.mIterations);
-
 	// Set number of used threads
 	omp_set_num_threads(usedThreads);
 
@@ -66,7 +63,6 @@ float render(
 		//renderers[i] = CreateRenderer(aConfig, aConfig.mBaseSeed + i, aConfig.mBaseSeed);
 		renderers[i]->mMaxPathLength = aConfig.mMaxPathLength;
 		renderers[i]->mMinPathLength = aConfig.mMinPathLength;
-		renderers[i]->SetupDebugImages(aConfig.mDebugImages);
 		renderers[i]->SetupBeamDensity(aConfig.mBeamDensType, aConfig.mScene->mCamera.mResolution, aConfig.mBeamDensMax);
 	}
 
@@ -102,7 +98,7 @@ float render(
 		// Iterations based loop
 		int cnt = 0, p = -1;
 #pragma omp parallel for shared(cnt,p,accumFrameBuffer,outputFrameBuffer,name,ext,filename)
-		for (iter = 0; iter < aConfig.mIterations; iter++)
+		for (iter = 0; iter < aConfig.mIterations/2; iter++)
 		{
 			int threadId = omp_get_thread_num();
 			renderers[threadId]->RunIteration(iter);
@@ -132,44 +128,45 @@ float render(
 
 	// Not all created renderers had to have been used.
 	// Those must not participate in accumulation.
+	std::cout<<"CON OUT: "<< aConfig.mContinuousOutput << std::endl;
 	for (int i = 0; i < usedThreads; i++)
 	{
-		if (!renderers[i]->WasUsed())
-			continue;
+		
+			if (!renderers[i]->WasUsed())
+				continue;
+
+			if (aConfig.mContinuousOutput <= 0)
+			{
+				if (usedRenderers == 0)
+				{
+					renderers[i]->GetFramebuffer(*aConfig.mFramebuffer);
+				}
+				else
+				{
+					Framebuffer tmp;
+					renderers[i]->GetFramebuffer(tmp);
+					aConfig.mFramebuffer->Add(tmp);
+				}
+			}
+
+			renderers[i]->AccumulateDebugImages(aConfig.mDebugImages);
+			renderers[i]->AccumulateBeamDensity(aConfig.mBeamDensity);
+
+			aConfig.mCameraTracingTime += renderers[i]->mCameraTracingTime;
+
+			usedRenderers++;
+		}
 
 		if (aConfig.mContinuousOutput <= 0)
 		{
-			if (usedRenderers == 0)
-			{
-				renderers[i]->GetFramebuffer(*aConfig.mFramebuffer);
-			}
-			else
-			{
-				Framebuffer tmp;
-				renderers[i]->GetFramebuffer(tmp);
-				aConfig.mFramebuffer->Add(tmp);
-			}
+			// Scale framebuffer by the number of used renderers
+			aConfig.mFramebuffer->Scale(1.f / usedRenderers);
 		}
-
-		renderers[i]->AccumulateDebugImages(aConfig.mDebugImages);
-		renderers[i]->AccumulateBeamDensity(aConfig.mBeamDensity);
-
-		aConfig.mCameraTracingTime += renderers[i]->mCameraTracingTime;
-
-		usedRenderers++;
-	}
-
-	if (aConfig.mContinuousOutput <= 0)
-	{
-		// Scale framebuffer by the number of used renderers
-		aConfig.mFramebuffer->Scale(1.f / usedRenderers);
-	}
-	else
-	{
-		*aConfig.mFramebuffer = accumFrameBuffer;
-		aConfig.mFramebuffer->Scale(1.f / iter);
-	}
-
+		else
+		{
+			*aConfig.mFramebuffer = accumFrameBuffer;
+			aConfig.mFramebuffer->Scale(1.f / iter);
+		}
 	aConfig.mCameraTracingTime /= iter;
 
 	// Clean up renderers
@@ -246,9 +243,9 @@ int main(int argc, const char* argv[])
 		// Saves the image
 		fbuffer.Save(config.mOutputName, 2.2f /*gamma*/);
 
-		std::string name = config.mOutputName.substr(0, config.mOutputName.length() - 4);
-		config.mDebugImages.Output(name, extension);
-		config.mBeamDensity.Output(name, extension);
+		//std::string name = config.mOutputName.substr(0, config.mOutputName.length() - 4);
+		//config.mDebugImages.Output(name, extension);
+		//config.mBeamDensity.Output(name, extension);
 
 		// Scene cleanup
 		delete config.mScene;

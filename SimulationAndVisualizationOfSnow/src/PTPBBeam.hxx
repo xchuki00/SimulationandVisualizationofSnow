@@ -73,7 +73,7 @@ struct PTPBBeam : PhotonBeam
 			return;
 		}
 		float beamBeamDistance, sinTheta, queryIsectDist, beamIsectDist;
-
+	
 		if (mMedium == medium && testIntersectionBeamBeam(ray.origin, ray.direction, isectmint, isectmaxt, mRay.origin,
 			mRay.direction, 0, mLength, mMaxRadiusSqr, beamBeamDistance, sinTheta, queryIsectDist, beamIsectDist))
 		{
@@ -169,11 +169,7 @@ struct PTPBBeam : PhotonBeam
 			float blue = beamBeamDistance * scattering.b() * ((exp(-extincion.b() * queryIsectDist) * exp(-extincion.b() * beamIsectDist)) / sinTheta);
 			Rgb coef(red,green,blue);
 			accumResult += mThroughputAtOrigin * coef;
-		/*		misWeight *
-				unweightedResult;*/
-
 			UPBP_ASSERT(!accumResult.isNanInfNeg());
-
 		}
 	}
 };

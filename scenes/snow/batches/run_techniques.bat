@@ -1,4 +1,4 @@
-@set NITER=1000000
+@set NITER=500
 @set ALG=upbp_bb1d
 @set PATH_LENGTH=80
 @set RESOLUTION=1600x700
@@ -7,9 +7,9 @@
 @set DEBUGIMG_OPTION=per_technique
 @set DEBUGIMG_OUTPUTWEIGHTS=1
 @set QUERY_BEAM=L
-@set PHOTON_BEAM=L
+@set PHOTON_BEAM=S
 @set IGNORE_SPEC=1
-@set COUT=100
+@set COUT=0
 @set NAME=ptpb.exr
 @set MODE=-compatible
 
@@ -22,6 +22,8 @@
 -r_alpha_bb1d %BB1D_ALPHA% ^
 -qbt %QUERY_BEAM% ^
 -pbt %PHOTON_BEAM% ^
+-maxMemPerThread 2000 ^
+-th 3 ^
 -pbc 23000 ^
 -seed 2657 ^
 %MODE% ^

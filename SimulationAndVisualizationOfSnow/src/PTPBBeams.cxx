@@ -11,7 +11,7 @@
 #endif
 
 #ifdef USE_GRID
-#include "..\..\smallupbp\SmallUPBP\src\Beams\PhGrid.hxx"
+#include "PTPBGrid.hxx"
 #endif
 
 /**

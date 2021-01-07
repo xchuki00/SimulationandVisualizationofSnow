@@ -12,6 +12,7 @@
 #include "Path\PathWeight.hxx"
 #include "Renderers\Renderer.hxx"
 #include "PTPBBeam.hxx"
+
 #define PTPB_CAMERA_MAXVERTS 1001
 #define PTPB_LIGHT_AVGVERTS 20
 
@@ -161,6 +162,7 @@ public:
 		mBB1DRadiusCalculation(aBB1DRadiusCalculation),
 		mBB1DRadiusKNN(aBB1DRadiusKNN),
 		mPhotonBeamType(aPhotonBeamType),
+		mQueryBeamType(aQueryBeamType),
 		mBB1DUsedLightSubPathCount(aBB1DUsedLightSubPathCount),
 		mBB1DBeamStorageFactor(aBB1DBeamStorageFactor),
 		mRefPathCountPerIter(aRefPathCountPerIter),
@@ -170,7 +172,7 @@ public:
 		mIgnoreFullySpecPaths(aIgnoreFullySpecPaths),
 		mRng(aSeed),
 		mBaseSeed(aBaseSeed),
-		mVerbose(aVerbose)
+		mVerbose(true)
 	{
 
 		if (mBB1DRadius < 0)
@@ -523,8 +525,8 @@ public:
 						{
 							uint estimatorTechniques = mEstimatorTechniques;
 							//if (!cameraState.mSpecularPath) estimatorTechniques |= BEAM_REDUCTION;
-							embree::AdditionalRayDataForMis data(&mLightVertices, &mPathEnds, &mCameraVerticesMisData, cameraState.mPathLength, mMinPathLength, mMaxPathLength, BeamType::LONG_BEAM, mPhotonBeamType, cameraState.mLastPdfWInv, 0, 0, 0, mBB1DMisWeightFactor, !mPhotonBeamsArray.empty() ? &Evaluator : NULL, mBB1DMinMFP, mBB1DUsedLightSubPathCount, mMinDistToMed, 0.0f, 0.0f, 0, &mDebugImages);
-							const Rgb contrib = Evaluator.evalBeamBeamEstimate(BeamType::LONG_BEAM, ray, mVolumeSegments,distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+							embree::AdditionalRayDataForMis data(&mLightVertices, &mPathEnds, &mCameraVerticesMisData, cameraState.mPathLength, mMinPathLength, mMaxPathLength, mQueryBeamType, mPhotonBeamType, cameraState.mLastPdfWInv, 0, 0, 0, mBB1DMisWeightFactor, !mPhotonBeamsArray.empty() ? &Evaluator : NULL, mBB1DMinMFP, mBB1DUsedLightSubPathCount, mMinDistToMed, 0.0f, 0.0f, 0, &mDebugImages);
+							const Rgb contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments,distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 							const Rgb mult = cameraState.mThroughput * mBB1DNormalization;
 							color += mult * contrib;
 						}
@@ -617,11 +619,11 @@ public:
 						Rgb contrib(0);
 						uint estimatorTechniques = mEstimatorTechniques;
 						//if (!cameraState.mSpecularPath) estimatorTechniques |= BEAM_REDUCTION;
-						embree::AdditionalRayDataForMis data(&mLightVertices, &mPathEnds, &mCameraVerticesMisData, cameraState.mPathLength, mMinPathLength, mMaxPathLength, BeamType::LONG_BEAM, mPhotonBeamType, cameraState.mLastPdfWInv, 0, 0, 0, mBB1DMisWeightFactor, !mPhotonBeamsArray.empty() ? &Evaluator : NULL, mBB1DMinMFP, mBB1DUsedLightSubPathCount, mMinDistToMed, 0.0f, 0.0f, 0, &mDebugImages);
+						embree::AdditionalRayDataForMis data(&mLightVertices, &mPathEnds, &mCameraVerticesMisData, cameraState.mPathLength, mMinPathLength, mMaxPathLength, mQueryBeamType, mPhotonBeamType, cameraState.mLastPdfWInv, 0, 0, 0, mBB1DMisWeightFactor, !mPhotonBeamsArray.empty() ? &Evaluator : NULL, mBB1DMinMFP, mBB1DUsedLightSubPathCount, mMinDistToMed, 0.0f, 0.0f, 0, &mDebugImages);
 						if (isect.IsOnSurface())
-							contrib = Evaluator.evalBeamBeamEstimate(BeamType::LONG_BEAM, ray, mVolumeSegments, distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+							contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments, distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 						else
-							contrib = Evaluator.evalBeamBeamEstimate(BeamType::LONG_BEAM, ray, mLiteVolumeSegments, distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+							contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mLiteVolumeSegments, distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 						const Rgb mult = cameraState.mThroughput * mBB1DNormalization;
 
 						color += mult * contrib;
@@ -1254,7 +1256,7 @@ private:
 		const float aLastRaySampleRevPdfsRatio,
 		const float aNextToLastPartialRevPdfW) const
 	{
-		return AccumulateCameraPathWeight(aPathLength, aLastRevPdfA, aLastSinTheta, aLastRaySampleRevPdfInv, aLastRaySampleRevPdfsRatio, aNextToLastPartialRevPdfW, BeamType::LONG_BEAM, mPhotonBeamType, mEstimatorTechniques, mCameraVerticesMisData);
+		return AccumulateCameraPathWeight(aPathLength, aLastRevPdfA, aLastSinTheta, aLastRaySampleRevPdfInv, aLastRaySampleRevPdfsRatio, aNextToLastPartialRevPdfW, mQueryBeamType, mPhotonBeamType, mEstimatorTechniques, mCameraVerticesMisData);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -1467,49 +1469,80 @@ private:
 		Rgb throughput = aThroughput;
 		float raySamplePdf = 1.0f;
 		float raySampleRevPdf = 1.0f;
-
-
-		UPBP_ASSERT(mPhotonBeamType == LONG_BEAM);
-		for (LiteVolumeSegments::const_iterator it = mLiteVolumeSegments.cbegin(); it != mLiteVolumeSegments.cend(); ++it)
+		if (mPhotonBeamType == SHORT_BEAM)
 		{
-			UPBP_ASSERT(it->mMediumID >= 0);
-			PTPBBeam beam;
-			beam.mMedium = mScene.mMedia[it->mMediumID];
-			if (beam.mMedium->HasScattering() && (beam.mMedium->GetMeanFreePath(aRay.origin) > mBB1DMinMFP))
+			for (VolumeSegments::const_iterator it = mVolumeSegments.cbegin(); it != mVolumeSegments.cend(); ++it)
 			{
-				beam.mRay = Ray(aRay.origin + aRay.direction * it->mDistMin, aRay.direction);
-				beam.mLength = it->mDistMax - it->mDistMin;
-				beam.mFlags = LONG_BEAM;
-				beam.mRaySamplePdf = raySamplePdf;
-				beam.mRaySampleRevPdf = raySampleRevPdf;
-				beam.mRaySamplingFlags = AbstractMedium::kEndInMedium;
-				if (it == mLiteVolumeSegments.cbegin())
-					beam.mRaySamplingFlags |= aRaySamplingFlags;
-				beam.mLastPdfWInv = aLastPdfWInv;
-				beam.mThroughputAtOrigin = throughput;
-				beam.mLightVertex = aLightVertex;
+				UPBP_ASSERT(it->mMediumID >= 0);
+				PTPBBeam beam;
+				beam.mMedium = mScene.mMedia[it->mMediumID];
+				if (beam.mMedium->HasScattering() && (beam.mMedium->GetMeanFreePath(aRay.origin) > mBB1DMinMFP))
+				{
+					beam.mRay = Ray(aRay.origin + aRay.direction * it->mDistMin, aRay.direction);
+					beam.mLength = it->mDistMax - it->mDistMin;
+					beam.mFlags = SHORT_BEAM;
+					beam.mRaySamplePdf = raySamplePdf;
+					beam.mRaySampleRevPdf = raySampleRevPdf;
+					beam.mRaySamplingFlags = AbstractMedium::kEndInMedium;
+					if (it == mVolumeSegments.cbegin())
+						beam.mRaySamplingFlags |= aRaySamplingFlags;
+					beam.mLastPdfWInv = aLastPdfWInv;
+					beam.mThroughputAtOrigin = throughput;
+					beam.mLightVertex = aLightVertex;
 
-				UPBP_ASSERT(mPhotonBeamsArray.size() < mPhotonBeamsArray.capacity());
-				mPhotonBeamsArray.push_back(beam);
-
+					UPBP_ASSERT(mPhotonBeamsArray.size() < mPhotonBeamsArray.capacity());
+					mPhotonBeamsArray.push_back(beam);
+				}
+				throughput *= it->mAttenuation / it->mRaySamplePdf;
+				raySamplePdf *= it->mRaySamplePdf;
+				raySampleRevPdf *= it->mRaySampleRevPdf;
 			}
-			if (beam.mMedium->IsHomogeneous())
-			{
-				const HomogeneousMedium* medium = ((const HomogeneousMedium*)beam.mMedium);
-				throughput *= medium->EvalAttenuation(it->mDistMax - it->mDistMin);
-			}
-			else
-			{
-				throughput *= beam.mMedium->EvalAttenuation(aRay, it->mDistMin, it->mDistMax);
-			}
-			float segmentRaySampleRevPdf;
-			float segmentRaySamplePdf = beam.mMedium->RaySamplePdf(aRay, it->mDistMin, it->mDistMax, it == mLiteVolumeSegments.cbegin() ? aRaySamplingFlags : 0, &segmentRaySampleRevPdf);
-			raySamplePdf *= segmentRaySamplePdf;
-			raySampleRevPdf *= segmentRaySampleRevPdf;
 		}
+		else // LONG_BEAM
+		{
+			UPBP_ASSERT(mPhotonBeamType == LONG_BEAM);
+			for (LiteVolumeSegments::const_iterator it = mLiteVolumeSegments.cbegin(); it != mLiteVolumeSegments.cend(); ++it)
+			{
+				UPBP_ASSERT(it->mMediumID >= 0);
+				PTPBBeam beam;
+				beam.mMedium = mScene.mMedia[it->mMediumID];
+				if (beam.mMedium->HasScattering() && (beam.mMedium->GetMeanFreePath(aRay.origin) > mBB1DMinMFP))
+				{
+					beam.mRay = Ray(aRay.origin + aRay.direction * it->mDistMin, aRay.direction);
+					beam.mLength = it->mDistMax - it->mDistMin;
+					beam.mFlags = LONG_BEAM;
+					beam.mRaySamplePdf = raySamplePdf;
+					beam.mRaySampleRevPdf = raySampleRevPdf;
+					beam.mRaySamplingFlags = AbstractMedium::kEndInMedium;
+					if (it == mLiteVolumeSegments.cbegin())
+						beam.mRaySamplingFlags |= aRaySamplingFlags;
+					beam.mLastPdfWInv = aLastPdfWInv;
+					beam.mThroughputAtOrigin = throughput;
+					beam.mLightVertex = aLightVertex;
 
-		if (!mPhotonBeamsArray.empty() && mPhotonBeamsArray.back().mLength > mPhotonBeamsArray.back().mMedium->MaxBeamLength())
-			mPhotonBeamsArray.back().mLength = mPhotonBeamsArray.back().mMedium->MaxBeamLength();
+					UPBP_ASSERT(mPhotonBeamsArray.size() < mPhotonBeamsArray.capacity());
+					mPhotonBeamsArray.push_back(beam);
+
+				}
+				if (beam.mMedium->IsHomogeneous())
+				{
+					const HomogeneousMedium* medium = ((const HomogeneousMedium*)beam.mMedium);
+					throughput *= medium->EvalAttenuation(it->mDistMax - it->mDistMin);
+				}
+				else
+				{
+					throughput *= beam.mMedium->EvalAttenuation(aRay, it->mDistMin, it->mDistMax);
+				}
+				float segmentRaySampleRevPdf;
+				float segmentRaySamplePdf = beam.mMedium->RaySamplePdf(aRay, it->mDistMin, it->mDistMax, it == mLiteVolumeSegments.cbegin() ? aRaySamplingFlags : 0, &segmentRaySampleRevPdf);
+				raySamplePdf *= segmentRaySamplePdf;
+				raySampleRevPdf *= segmentRaySampleRevPdf;
+			}
+
+			if (!mPhotonBeamsArray.empty() && mPhotonBeamsArray.back().mLength > mPhotonBeamsArray.back().mMedium->MaxBeamLength())
+				mPhotonBeamsArray.back().mLength = mPhotonBeamsArray.back().mMedium->MaxBeamLength();
+
+		}
 	}
 
 	// Accumulates PDF ratios of all sampling techniques along path originally sampled from light
@@ -1524,7 +1557,7 @@ private:
 		const uint  aCurrentlyEvaluatedTechnique,
 		const bool  aCameraConnection) const
 	{
-		return AccumulateLightPathWeight(aPathIndex, aPathLength, aLastRevPdfA, aLastSinTheta, aLastRaySampleRevPdfInv, aLastRaySampleRevPdfsRatio, aNextToLastPartialRevPdfW, aCurrentlyEvaluatedTechnique, BeamType::LONG_BEAM, mPhotonBeamType, mEstimatorTechniques, aCameraConnection, &mPathEnds, &mLightVertices);
+		return AccumulateLightPathWeight(aPathIndex, aPathLength, aLastRevPdfA, aLastSinTheta, aLastRaySampleRevPdfInv, aLastRaySampleRevPdfsRatio, aNextToLastPartialRevPdfW, aCurrentlyEvaluatedTechnique, mQueryBeamType, mPhotonBeamType, mEstimatorTechniques, aCameraConnection, &mPathEnds, &mLightVertices);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -1639,6 +1672,7 @@ private:
 	int	                 mBB1DRadiusKNN;             // Value x means that x-th closest beam vertex will be used for calculation of cone radius at the current beam vertex
 	float                mBB1DMinMFP;                // Minimum MFP of medium to store photon beams in it
 	BeamType             mPhotonBeamType;            // Short/long beam
+	BeamType             mQueryBeamType;            // Short/long beam
 	float                mBB1DUsedLightSubPathCount; // First mBB1DUsedLightSubPathCount out of mLightSubPathCount light paths will generate photon beams
 	float                mBB1DBeamStorageFactor;     // Factor used for computation of minimum MFP of media where photon beams are used. The lower it is the denser media will use photon beams.
 
@@ -1652,7 +1686,7 @@ private:
 
 	std::vector<UPBPLightVertex> mLightVertices;          // Stored light vertices
 	MisData mCameraVerticesMisData[PTPB_CAMERA_MAXVERTS]; // Stored MIS data for camera vertices (we don't need store whole vertices as for light paths)
-	PTPBBeamsArray mPhotonBeamsArray;	                  // Stored photon beams
+	PhotonBeamsArray mPhotonBeamsArray;	                  // Stored photon beams
 
 	VolumeSegments mVolumeSegments;         // Path segments intersecting media (up to scattering point)
 	LiteVolumeSegments mLiteVolumeSegments; // Lite path segments intersecting media (up to intersection with solid surface)

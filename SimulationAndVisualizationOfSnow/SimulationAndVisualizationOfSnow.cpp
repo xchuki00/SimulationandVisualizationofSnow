@@ -104,6 +104,8 @@ float render(
 			renderers[threadId]->RunIteration(iter);
 #pragma omp critical
 			{
+
+				std::cout << "IT: " << cnt << std::endl;
 				++cnt;
 				int percent = (int)(((float)cnt / aConfig.mIterations) * 100.0f);
 				if (percent != p)
@@ -128,7 +130,6 @@ float render(
 
 	// Not all created renderers had to have been used.
 	// Those must not participate in accumulation.
-	std::cout<<"CON OUT: "<< aConfig.mContinuousOutput << std::endl;
 	for (int i = 0; i < usedThreads; i++)
 	{
 		

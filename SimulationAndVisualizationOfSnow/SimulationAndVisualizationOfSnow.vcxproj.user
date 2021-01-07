@@ -1,4 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommandArguments> -s -1 "D:\FIT\Diplomka\SimulationandVisualizationofSnow\scenes\snow\snow.obj" -a upbp_bb1d -l 80 -i 350 -r 800x400 -r_initial_bb1d -0.0001 -r_alpha_bb1d 1 -maxMemPerThread 2000 -th 1 -qbt L -pbt S -pbc 23000 -seed 2657 -compatible -ignorespec 1 -continuous_output  0 -o ptpb.exr                                         </LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerCommandArguments> -s -1 "D:\FIT\Diplomka\SimulationandVisualizationofSnow\scenes\snow\snow.obj" -a upbp_bb1d -l 80 -i 350 -r 800x400 -r_initial_bb1d -0.0001 -r_alpha_bb1d 1 -th 1 -qbt L -pbt S -pbc 15000 -seed 1234 -compatible -ignorespec 1 -continuous_output  0 -o ptpb.exr                                         </LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

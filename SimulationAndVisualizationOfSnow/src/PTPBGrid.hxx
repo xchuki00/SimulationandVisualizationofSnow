@@ -57,12 +57,8 @@ public:
 		Grid(*this)
 	{
 	}
-
-	/**
-	 * @brief	Empty destructor.
-	 */
-	~PTPBAccelStruct()
-	{
+	~PTPBAccelStruct(){
+		
 	}
 
 	/**

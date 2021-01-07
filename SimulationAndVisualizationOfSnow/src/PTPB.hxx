@@ -216,7 +216,7 @@ public:
 			// Radius reduction (1st iteration has aIteration == 0, thus offset)
 			const float effectiveIteration = 1 + aIteration * mLightSubPathCount / mRefPathCountPerIter;
 			// BB1D
-			mBB1DRadius = mBB1DRadius * sqrt((aIteration+2/3)/aIteration+1);
+			mBB1DRadius = mBB1DRadius * sqrt((aIteration+2/3)/(aIteration+1));
 			mBB1DRadius = std::max(mBB1DRadius, 1e-7f); // Purely for numeric stability
 
 			// Constant for decision whether to store beams or not
@@ -527,6 +527,8 @@ public:
 							//if (!cameraState.mSpecularPath) estimatorTechniques |= BEAM_REDUCTION;
 							embree::AdditionalRayDataForMis data(&mLightVertices, &mPathEnds, &mCameraVerticesMisData, cameraState.mPathLength, mMinPathLength, mMaxPathLength, mQueryBeamType, mPhotonBeamType, cameraState.mLastPdfWInv, 0, 0, 0, mBB1DMisWeightFactor, !mPhotonBeamsArray.empty() ? &Evaluator : NULL, mBB1DMinMFP, mBB1DUsedLightSubPathCount, mMinDistToMed, 0.0f, 0.0f, 0, &mDebugImages);
 							const Rgb contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments,distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+							//const Rgb contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+
 							const Rgb mult = cameraState.mThroughput * mBB1DNormalization;
 							color += mult * contrib;
 						}
@@ -624,6 +626,10 @@ public:
 							contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments, distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 						else
 							contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mLiteVolumeSegments, distance, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+						//if (isect.IsOnSurface())
+						//	contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments,  estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+						//else
+						//	contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mLiteVolumeSegments,  estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 						const Rgb mult = cameraState.mThroughput * mBB1DNormalization;
 
 						color += mult * contrib;
@@ -1475,6 +1481,7 @@ private:
 			{
 				UPBP_ASSERT(it->mMediumID >= 0);
 				PTPBBeam beam;
+				//PhotonBeam beam;
 				beam.mMedium = mScene.mMedia[it->mMediumID];
 				if (beam.mMedium->HasScattering() && (beam.mMedium->GetMeanFreePath(aRay.origin) > mBB1DMinMFP))
 				{
@@ -1505,6 +1512,7 @@ private:
 			{
 				UPBP_ASSERT(it->mMediumID >= 0);
 				PTPBBeam beam;
+				//PhotonBeam beam;
 				beam.mMedium = mScene.mMedia[it->mMediumID];
 				if (beam.mMedium->HasScattering() && (beam.mMedium->GetMeanFreePath(aRay.origin) > mBB1DMinMFP))
 				{
@@ -1686,7 +1694,7 @@ private:
 
 	std::vector<UPBPLightVertex> mLightVertices;          // Stored light vertices
 	MisData mCameraVerticesMisData[PTPB_CAMERA_MAXVERTS]; // Stored MIS data for camera vertices (we don't need store whole vertices as for light paths)
-	PhotonBeamsArray mPhotonBeamsArray;	                  // Stored photon beams
+	PTPBBeamsArray mPhotonBeamsArray;	                  // Stored photon beams
 
 	VolumeSegments mVolumeSegments;         // Path segments intersecting media (up to scattering point)
 	LiteVolumeSegments mLiteVolumeSegments; // Lite path segments intersecting media (up to intersection with solid surface)

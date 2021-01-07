@@ -98,7 +98,7 @@ float render(
 		// Iterations based loop
 		int cnt = 0, p = -1;
 #pragma omp parallel for shared(cnt,p,accumFrameBuffer,outputFrameBuffer,name,ext,filename)
-		for (iter = 0; iter < aConfig.mIterations/2; iter++)
+		for (iter = 0; iter < aConfig.mIterations; iter++)
 		{
 			int threadId = omp_get_thread_num();
 			renderers[threadId]->RunIteration(iter);
@@ -175,7 +175,7 @@ float render(
 		delete renderers[i];
 
 	delete[] renderers;
-
+	std::cout << "DONE" << std::endl;
 	return float(endT - startT) / CLOCKS_PER_SEC;
 }
 int main(int argc, const char* argv[])

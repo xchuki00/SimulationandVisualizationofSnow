@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments> -s -1 "D:\FIT\Diplomka\SimulationandVisualizationofSnow\scenes\snow\snow.obj" -a upbp_bb1d -l 80 -i 350 -r 800x400 -r_initial_bb1d -0.0001 -r_alpha_bb1d 1 -th 1 -qbt L -pbt S -pbc 15000 -seed 1234 -compatible -ignorespec 1 -continuous_output  0 -o ptpb.exr                                         </LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments> -s -1 "D:\FIT\Diplomka\SimulationandVisualizationofSnow\scenes\snow - generated\snow.obj" -a upbp_bb1d -l 80 -i 500 -r 800x400 -r_initial_bb1d -0.00001 -r_alpha_bb1d 0.1 -th 4 -qbt L -pbt S -pbc 15000 -seed 1234 -compatible -ignorespec 1 -continuous_output  0 -o ptpb.exr                                         </LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

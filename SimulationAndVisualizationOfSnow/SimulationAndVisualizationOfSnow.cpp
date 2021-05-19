@@ -1,4 +1,37 @@
-﻿// SimulationAndVisualizationOfSnow.cpp : Tento soubor obsahuje funkci main. Provádění programu se tam zahajuje a ukončuje.
+﻿/*
+ * Copyright (C) 2014, Petr Vevoda, Martin Sik (http://cgg.mff.cuni.cz/~sik/),
+ * Tomas Davidovic (http://www.davidovic.cz), Iliyan Georgiev (http://www.iliyan.com/),
+ * Jaroslav Krivanek (http://cgg.mff.cuni.cz/~jaroslav/)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * (The above is MIT License: http://en.wikipedia.origin/wiki/MIT_License)
+ *
+ *
+ *  Patrik Chukir
+ * xchuki@stud.fit.vutbr.cz
+ * p.chukir@gmail.com
+ * Tento kód je převzatý ze smallUpbp a upravený pro potřeby metody Progressive transient photon beams.
+ * Vzhledem k tomu, že úzce využívá funkcionalitu SmallUPBP, je zde velká míra shodných částí kódu.
+ */
+
+// SimulationAndVisualizationOfSnow.cpp : Tento soubor obsahuje funkci main. Provádění programu se tam zahajuje a ukončuje.
 //
 #pragma warning(disable: 4482)
 
@@ -6,43 +39,13 @@
 
 #include "src/PTPB.hxx"
 #include "Bre\EmbreeAcc.hxx"
-#include "Misc\Config.hxx"
-
-AbstractRenderer* getPTPB(
-	const Config& aConfig,
-	const int     aSeed,
-	const int     aBaseSeed) {
-
-	const Scene& scene = *aConfig.mScene;
-	return new PTPB(
-		scene, 
-	PTPB::AlgorithmType::kCustom,
-		aConfig.mAlgorithmFlags, 
-		aConfig.mQueryBeamType,
-		aConfig.mBB1DRadiusInitial, 
-		aConfig.mBB1DRadiusAlpha, 
-		aConfig.mBB1DRadiusCalculation, 
-		aConfig.mBB1DRadiusKNN, 
-		aConfig.mPhotonBeamType, 
-		aConfig.mBB1DUsedLightSubPathCount, 
-		aConfig.mBB1DBeamStorageFactor, 
-		aConfig.mRefPathCountPerIter, 
-		aConfig.mPathCountPerIter,
-		aConfig.mMinDistToMed,
-		aConfig.mMaxMemoryPerThread, 
-		aSeed, aBaseSeed, 
-		aConfig.mIgnoreFullySpecPaths
-	);
-
-	/*return new PTBP(scene, aSeed, PTBP::kPointBeam2D, aConfig.mPB2DRadiusInitial, aConfig.mPB2DRadiusAlpha, aConfig.mPB2DRadiusCalculation, aConfig.mPB2DRadiusKNN, aConfig.mQueryBeamType,
-		aConfig.mBB1DRadiusInitial, aConfig.mBB1DRadiusAlpha, aConfig.mBB1DRadiusCalculation, aConfig.mBB1DRadiusKNN, aConfig.mPhotonBeamType, aConfig.mBB1DUsedLightSubPathCount, aConfig.mRefPathCountPerIter);*/
-}
+#include "src/PTPBConfig.hxx"
 
 //////////////////////////////////////////////////////////////////////////
 // The main rendering function, renders what is in aConfig
 
 float render(
-	const Config& aConfig,
+	const PTPBConfig& aConfig,
 	int* oUsedIterations = NULL)
 {
 
@@ -59,7 +62,7 @@ float render(
 
 	for (int i = 0; i < usedThreads; i++)
 	{
-		renderers[i] = getPTPB(aConfig, aConfig.mBaseSeed + i, aConfig.mBaseSeed);
+		renderers[i] = CreateRenderer(aConfig, aConfig.mBaseSeed + i, aConfig.mBaseSeed);
 		//renderers[i] = CreateRenderer(aConfig, aConfig.mBaseSeed + i, aConfig.mBaseSeed);
 		renderers[i]->mMaxPathLength = aConfig.mMaxPathLength;
 		renderers[i]->mMinPathLength = aConfig.mMinPathLength;
@@ -104,8 +107,6 @@ float render(
 			renderers[threadId]->RunIteration(iter);
 #pragma omp critical
 			{
-
-				std::cout << "IT: " << cnt << std::endl;
 				++cnt;
 				int percent = (int)(((float)cnt / aConfig.mIterations) * 100.0f);
 				if (percent != p)
@@ -188,14 +189,15 @@ int main(int argc, const char* argv[])
 		EmbreeAcc::initLib();
 
 		// Setups config based on command line
-		Config config;
-		ParseCommandline(argc, argv, config);
+		PTPBConfig config;
+		PTPBParseCommandline(argc, argv, config);
 
 		// If number of threads is invalid, set 1 thread per processor
 		if (config.mNumThreads <= 0)
 			config.mNumThreads = std::max(1, omp_get_num_procs());
 
 		// When some error has been encountered, exits
+
 		if (config.mScene == NULL)
 			return 1;
 

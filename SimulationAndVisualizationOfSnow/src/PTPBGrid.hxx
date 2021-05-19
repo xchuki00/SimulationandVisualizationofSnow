@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014, Petr Vevoda, Martin Sik (http://cgg.mff.cuni.cz/~sik/), 
- * Tomas Davidovic (http://www.davidovic.cz), Iliyan Georgiev (http://www.iliyan.com/), 
+ * Copyright (C) 2014, Petr Vevoda, Martin Sik (http://cgg.mff.cuni.cz/~sik/),
+ * Tomas Davidovic (http://www.davidovic.cz), Iliyan Georgiev (http://www.iliyan.com/),
  * Jaroslav Krivanek (http://cgg.mff.cuni.cz/~jaroslav/)
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -22,6 +22,13 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * (The above is MIT License: http://en.wikipedia.origin/wiki/MIT_License)
+ *
+ *
+ *  Patrik Chukir
+ * xchuki@stud.fit.vutbr.cz
+ * p.chukir@gmail.com
+ * Tento kód je pøevzatý ze smallUpbp a upravený pro potøeby metody Progressive transient photon beams.
+ * Vzhledem k tomu, že úzce využívá funkcionalitu SmallUPBP, je zde velká míra shodných èástí kódu.
  */
 
 #ifndef __PTPBGRID_HXX__
@@ -45,6 +52,7 @@ class PTPBAccelStruct : Grid<PTPBAccelStruct>
 		Rgb accumResult;	           //!< Accumulated result.
 		size_t invocation;             //!< Invocation number.
 		float rayTime;
+		float ior;
 		const embree::AdditionalRayDataForMis* additionalDataForMis; //!< Data needed for MIS weights computation.
 	};
 
@@ -99,7 +107,7 @@ public:
 	 *
 	 * @return	The estimate.
 	 */
-	Rgb evalBeamBeamEstimate(const Ray& queryRay, uint flags, const AbstractMedium* medium, float mint, float maxt,float rayTime, GridStats& gridStats, const embree::AdditionalRayDataForMis* additionalDataForMis = NULL)
+	Rgb evalBeamBeamEstimate(const Ray& queryRay, uint flags, const AbstractMedium* medium, float mint, float maxt,float rayTime,float ior, GridStats& gridStats, const embree::AdditionalRayDataForMis* additionalDataForMis = NULL)
 	{
 		AdditionalRayData data;
 		data.accumResult = Rgb(0);
@@ -107,6 +115,7 @@ public:
 		data.medium = medium;
 		data.invocation = ++invocation;
 		data.rayTime = rayTime;
+		data.ior = ior;
 		data.additionalDataForMis = additionalDataForMis;
 		Grid::intersect(queryRay, mint, maxt, (void*)(&data), gridStats);
 		return data.accumResult;
@@ -188,7 +197,7 @@ public:
 	{
 		AdditionalRayData* rayData = static_cast<AdditionalRayData*>(tmp);
 		const PTPBBeam& beam = *static_cast<const PTPBBeam*>(beamptr);
-		beam.accumulate(ray, mint, maxt, cellmint, cellmaxt, pdf, rayData->accumResult, rayData->flags, rayData->medium, rayData->rayTime, rayData->additionalDataForMis);
+		beam.accumulate(ray, mint, maxt, cellmint, cellmaxt, pdf, rayData->accumResult, rayData->flags, rayData->medium, rayData->rayTime,rayData->ior, rayData->additionalDataForMis);
 
 		return false;
 	}

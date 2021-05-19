@@ -35,5 +35,8 @@
     <ClInclude Include="src\PTPB.hxx">
       <Filter>Zdrojové soubory</Filter>
     </ClInclude>
+    <ClInclude Include="src\PTPBConfig.hxx">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

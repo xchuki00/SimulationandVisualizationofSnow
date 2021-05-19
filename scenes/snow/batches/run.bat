@@ -1,34 +1,21 @@
-@set NITER=1000
-@set ALG=upbp_bb1d
-@set PATH_LENGTH=80
-@set RESOLUTION=1600x700
-@set BB1D_RADIUS=10
-@set BB1D_ALPHA=1
-@set DEBUGIMG_OPTION=per_technique
-@set DEBUGIMG_OUTPUTWEIGHTS=1
+@set NITER=7200
+@set PATH_LENGTH=12
+@set RESOLUTION=800x350
+@set BB1D_RADIUS=1.0
+@set BB1D_ALPHA=0.01
 @set QUERY_BEAM=L
-@set PHOTON_BEAM=S
-@set IGNORE_SPEC=1
-@set COUT=0
-@set NAME=ptpb.exr
-@set MODE=-compatible
+@set PHOTON_BEAM=L
+@set NAME=ptpb-18.5.exr
 
-"..\..\..\SimulationAndVisualizationOfSnow\x64\Release\SimulationAndVisualizationOfSnow.exe" -s -1 "..\snow.obj" ^
--a %ALG% ^
+"..\..\..\SimulationAndVisualizationOfSnow\SimulationAndVisualizationOfSnow.exe" -s -1 "..\snow.obj" ^
 -l %PATH_LENGTH% ^
--i %NITER% ^
+-t %NITER% ^
 -r %RESOLUTION% ^
 -r_initial_bb1d %BB1D_RADIUS% ^
 -r_alpha_bb1d %BB1D_ALPHA% ^
 -qbt %QUERY_BEAM% ^
 -pbt %PHOTON_BEAM% ^
--maxMemPerThread 2000 ^
 -th 4 ^
--pbc 23000 ^
--seed 2657 ^
-%MODE% ^
--ignorespec %IGNORE_SPEC% ^
--continuous_output %COUT% ^
--o %NAME%
-
-
+-pbc 24000 ^
+-seed 1234 ^
+-o PTPB_%NITER%.exr

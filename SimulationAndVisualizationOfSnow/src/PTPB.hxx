@@ -1,3 +1,35 @@
+/*
+ * Copyright (C) 2014, Petr Vevoda, Martin Sik (http://cgg.mff.cuni.cz/~sik/),
+ * Tomas Davidovic (http://www.davidovic.cz), Iliyan Georgiev (http://www.iliyan.com/),
+ * Jaroslav Krivanek (http://cgg.mff.cuni.cz/~jaroslav/)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * (The above is MIT License: http://en.wikipedia.origin/wiki/MIT_License)
+ *
+ *
+ *  Patrik Chukir
+ * xchuki@stud.fit.vutbr.cz
+ * p.chukir@gmail.com
+ * Tento kód je pøevzatý ze smallUpbp a upravený pro potøeby metody Progressive transient photon beams.
+ * Vzhledem k tomu, že úzce využívá funkcionalitu SmallUPBP, je zde velká míra shodných èástí kódu. 
+ */
 
 #ifndef __PTPB_HXX__
 #define __PTPB_HXX__
@@ -96,14 +128,10 @@ class PTPB : public AbstractRenderer
 
 			// MIS weight
 			float misWeight = 1.0f;
-			if (mPTPB.mAlgorithm != kPPM)
-			{
-				const float misWeightFactorInv = 1.0f / (aLightVertex.mInMedium ? aLightVertex.mMisData.mPP3DMisWeightFactor : aLightVertex.mMisData.mSurfMisWeightFactor);
-				const float wCamera = mPTPB.AccumulateCameraPathWeight2(mCameraState.mPathLength, misWeightFactorInv, sinTheta, aLightVertex.mMisData.mRaySamplePdfInv, aLightVertex.mMisData.mRaySamplePdfsRatio, cameraBsdfRevPdfW);
-				const float wLight = mPTPB.AccumulateLightPathWeight2(aLightVertex.mPathIdx, aLightVertex.mPathLength, misWeightFactorInv, 0, 0, 0, cameraBsdfDirPdfW, aLightVertex.mInMedium ? PP3D : SURF, false);
-				misWeight = 1.f / (wLight + wCamera);
-			}
-
+			const float misWeightFactorInv = 1.0f / (aLightVertex.mInMedium ? aLightVertex.mMisData.mPP3DMisWeightFactor : aLightVertex.mMisData.mSurfMisWeightFactor);
+			const float wCamera = mPTPB.AccumulateCameraPathWeight2(mCameraState.mPathLength, misWeightFactorInv, sinTheta, aLightVertex.mMisData.mRaySamplePdfInv, aLightVertex.mMisData.mRaySamplePdfsRatio, cameraBsdfRevPdfW);
+			const float wLight = mPTPB.AccumulateLightPathWeight2(aLightVertex.mPathIdx, aLightVertex.mPathLength, misWeightFactorInv, 0, 0, 0, cameraBsdfDirPdfW, aLightVertex.mInMedium ? PP3D : SURF, false);
+			misWeight = 1.f / (wLight + wCamera);
 			const Rgb mult = cameraBsdfFactor * aLightVertex.mThroughput;
 			mContrib += misWeight * mult;
 			mDebugImages.accumRgbWeight(aLightVertex.mPathLength, aLightVertex.mInMedium ? DebugImages::PP3D : DebugImages::SURFACE_PHOTON_MAPPING, mult, misWeight);
@@ -131,7 +159,8 @@ public:
 		kPPM,      // camera and light vertices merged on first non-specular surface from camera (cannot handle mixed specular + non-specular materials)
 		kBPM,      // camera and light vertices merged on along full path
 		kVCM,      // vertex connection and merging
-		kCustom    // combination of techniques (BPT, SURF, PP3D, PB2D, BB1D) specified using flags
+		kCustom,    // combination of techniques (BPT, SURF, PP3D, PB2D, PTPB1D) specified using flags
+		kPTPB
 	};
 
 	PTPB(
@@ -139,13 +168,11 @@ public:
 		const AlgorithmType     aAlgorithm,
 		const uint              aEstimatorTechniques,
 		const BeamType          aQueryBeamType,
-		const float 	        aBB1DRadiusInitial,
-		const float             aBB1DRadiusAlpha,
-		const RadiusCalculation aBB1DRadiusCalculation,
-		const int		        aBB1DRadiusKNN,
+		const float 	        aPTPB1DRadiusInitial,
+		const RadiusCalculation aPTPB1DRadiusCalculation,
 		const BeamType          aPhotonBeamType,
-		const float             aBB1DUsedLightSubPathCount,
-		const float             aBB1DBeamStorageFactor,
+		const float             aPTPB1DUsedLightSubPathCount,
+		const float             aPTPB1DBeamStorageFactor,
 		const float             aRefPathCountPerIter,
 		const float             aPathCountPerIter,
 		const float             aMinDistToMed,
@@ -156,16 +183,13 @@ public:
 		const bool              aVerbose = false) :
 		AbstractRenderer(aScene),
 		Evaluator(aScene),
-		mAlgorithm(aAlgorithm),
 		mEstimatorTechniques(aEstimatorTechniques),
-		mBB1DRadiusAlpha(aBB1DRadiusAlpha),
-		mBB1DRadius(aBB1DRadiusInitial),
-		mBB1DRadiusCalculation(aBB1DRadiusCalculation),
-		mBB1DRadiusKNN(aBB1DRadiusKNN),
+		mPTPB1DRadius(aPTPB1DRadiusInitial),
+		mPTPB1DRadiusCalculation(aPTPB1DRadiusCalculation),
 		mPhotonBeamType(aPhotonBeamType),
 		mQueryBeamType(aQueryBeamType),
-		mBB1DUsedLightSubPathCount(aBB1DUsedLightSubPathCount),
-		mBB1DBeamStorageFactor(aBB1DBeamStorageFactor),
+		mPTPB1DUsedLightSubPathCount(aPTPB1DUsedLightSubPathCount),
+		mPTPB1DBeamStorageFactor(aPTPB1DBeamStorageFactor),
 		mRefPathCountPerIter(aRefPathCountPerIter),
 		mPathCountPerIter(aPathCountPerIter),
 		mMinDistToMed(aMinDistToMed),
@@ -176,19 +200,16 @@ public:
 		mVerbose(aVerbose)
 	{
 
-		if (mBB1DRadius < 0)
-			mBB1DRadius = -mBB1DRadius * mScene.mSceneSphere.mSceneRadius;
-		UPBP_ASSERT(mBB1DRadius > 0);
+		if (mPTPB1DRadius < 0)
+			mPTPB1DRadius = -mPTPB1DRadius * mScene.mSceneSphere.mSceneRadius;
+		UPBP_ASSERT(mPTPB1DRadius > 0);
 
 		if (mMinDistToMed < 0)
 			mMinDistToMed = -mMinDistToMed * mScene.mSceneSphere.mSceneRadius;
 		UPBP_ASSERT(mMinDistToMed >= 0);
 		mTraceLightPaths = mEstimatorTechniques != 0;
 		mTraceCameraPaths = mEstimatorTechniques != 0;
-		mConnectToCamera = mEstimatorTechniques & BPT;
-		mConnectToLightSource = mEstimatorTechniques & BPT;
-		mConnectToLightVertices = mEstimatorTechniques & BPT;
-		mMergeWithLightVerticesBB1D = mEstimatorTechniques & BB1D;
+		mMergeWithLightVerticesPTPB1D =true;
 
 
 	}
@@ -211,28 +232,27 @@ public:
 			mRng = Rng(mBaseSeed + aIteration);
 			Evaluator.mSeed = mBaseSeed + aIteration;
 
-			if (mBB1DUsedLightSubPathCount < 0)
-				mBB1DUsedLightSubPathCount = std::floor(-mBB1DUsedLightSubPathCount * mLightSubPathCount);
+			if (mPTPB1DUsedLightSubPathCount < 0)
+				mPTPB1DUsedLightSubPathCount = std::floor(-mPTPB1DUsedLightSubPathCount * mLightSubPathCount);
 
 			// Radius reduction (1st iteration has aIteration == 0, thus offset)
 			const float effectiveIteration = 1 + aIteration * mLightSubPathCount / mRefPathCountPerIter;
-			// BB1D
+			// PTPB1D
 			// TADY VOLE, pokud je podmínka aritmeticky dobøe je radius moc malý, pokud špatnì je postupnì vìtší než 1 a potom je potøeba pøíliš pamìti
-			mBB1DRadius = mBB1DRadius * sqrt(((float)aIteration + 2.0 / 3.0) / ((float)aIteration + 1.0));
-			mBB1DRadius = std::max(mBB1DRadius, 1e-7f); // Purely for numeric stability
-			std::cout << "RADIUS: " << mBB1DRadius << std::endl;
+			mPTPB1DRadius = mPTPB1DRadius * sqrt(((float)aIteration + 2.0 / 3.0) / ((float)aIteration + 1.0));
+			mPTPB1DRadius = std::max(mPTPB1DRadius, 1e-7f); // Purely for numeric stability
 			// Constant for decision whether to store beams or not
-			mBB1DMinMFP = mBB1DBeamStorageFactor * 0.5f * PI_F * mBB1DRadius;
-			if (mVerbose) std::cout << "min mfp: " << mBB1DMinMFP << std::endl;
+			mPTPB1DMinMFP = mPTPB1DBeamStorageFactor * 0.5f * PI_F * mPTPB1DRadius;
+			if (mVerbose) std::cout << "min mfp: " << mPTPB1DMinMFP << std::endl;
 
-			const float etaBB1D = 0.5f * mBB1DRadius * mBB1DUsedLightSubPathCount;
+			const float etaPTPB1D = 0.5f * mPTPB1DRadius * mPTPB1DUsedLightSubPathCount;
 
 			// Factor used to normalize vertex merging contribution.
 			// We divide the summed up energy by disk radius and number of light paths
-			mBB1DNormalization = 1.f / mBB1DUsedLightSubPathCount;
+			mPTPB1DNormalization = 1.f / mPTPB1DUsedLightSubPathCount;
 
 			// MIS weight constants
-			mBB1DMisWeightFactor = etaBB1D;
+			mPTPB1DMisWeightFactor = etaPTPB1D;
 
 			// Clear path ends, nothing ends anywhere
 			mPathEnds.resize(pathCountL);
@@ -242,7 +262,7 @@ public:
 			UPBP_ASSERT(mMaxPathLength < PTPB_CAMERA_MAXVERTS);
 
 			const float maxLightVerts = std::min(mLightSubPathCount * std::min((int)mMaxPathLength, PTPB_LIGHT_AVGVERTS), (float)mMaxMemoryPerThread / sizeof(UPBPLightVertex));
-			const float maxBeams = std::min(mBB1DUsedLightSubPathCount * std::min((int)mMaxPathLength, PTPB_LIGHT_AVGVERTS), (float)mMaxMemoryPerThread / sizeof(UPBPLightVertex));
+			const float maxBeams = std::min(mPTPB1DUsedLightSubPathCount * std::min((int)mMaxPathLength, PTPB_LIGHT_AVGVERTS), (float)mMaxMemoryPerThread / sizeof(UPBPLightVertex));
 
 			if (mVerbose)
 				std::cout << "allocating : " << ((int)maxLightVerts) << std::endl;
@@ -292,6 +312,7 @@ public:
 					float time = 0;
 					//////////////////////////////////////////////////////////////////////////
 					// Trace light path
+					float ior = 1;
 					for (;; ++lightState.mPathLength)
 					{
 						// Prepare ray
@@ -322,7 +343,7 @@ public:
 							lightState.mThroughputEnd = lightState.mThroughput / (VolumeSegment::AccumulateAttenuationWithoutPdf(mVolumeSegments) / raySamplePdf);
 
 						}
-						auto ior = mScene.RelativeIOR(isect, lightState.mBoundaryStack);
+						ior = mScene.RelativeIOR(isect, lightState.mBoundaryStack);
 
 						originInMedium = isect.IsInMedium();
 						float speed = mDefaultLightSpeed;
@@ -330,9 +351,10 @@ public:
 						if (originInMedium) {
 							speed /= ior;
 						}
+
 						time = isect.mDist / speed;
 						// Store beam if required
-						if (mMergeWithLightVerticesBB1D && pathIdx < mBB1DUsedLightSubPathCount)
+						if (mMergeWithLightVerticesPTPB1D && pathIdx < mPTPB1DUsedLightSubPathCount)
 						{
 							if (!mPhotonBeamsArray.empty()) {
 								previusDistance = mPhotonBeamsArray.back().startTime;
@@ -396,12 +418,12 @@ public:
 							lightVertex.mMisData.mRaySampleRevPdfInv = 1.0f;
 							lightVertex.mMisData.mSinTheta = 0.0f;
 							lightVertex.mMisData.mCosThetaOut = 0.0f;
-							lightVertex.mMisData.mBB1DMisWeightFactor = bsdf.IsOnSurface() ? 0 : mBB1DMisWeightFactor;
+							lightVertex.mMisData.mBB1DMisWeightFactor = bsdf.IsOnSurface() ? 0 : mPTPB1DMisWeightFactor;
 							lightVertex.mMisData.mBB1DBeamSelectionPdf = bsdf.IsOnSurface() ? 0 : 1;
 							lightVertex.mMisData.mIsDelta = bsdf.IsDelta();
 							lightVertex.mMisData.mIsOnLightSource = false;
 							lightVertex.mMisData.mIsSpecular = false;
-							lightVertex.mMisData.mInMediumWithBeams = bsdf.IsOnSurface() ? false : (bsdf.GetMedium()->GetMeanFreePath(hitPoint) > mBB1DMinMFP);
+							lightVertex.mMisData.mInMediumWithBeams = bsdf.IsOnSurface() ? false : (bsdf.GetMedium()->GetMeanFreePath(hitPoint) > mPTPB1DMinMFP);
 
 							lightVertex.mMisData.mRaySamplePdfsRatio = 0.0f;
 							lightVertex.mMisData.mRaySampleRevPdfsRatio = 0.0f;
@@ -442,13 +464,6 @@ public:
 							mLightVertices.push_back(lightVertex);
 						}
 
-						// Connect to camera, unless scattering function is purely specular or we are not allowed to connect from surface
-						if (mConnectToCamera && !bsdf.IsDelta() && (bsdf.IsInMedium()))
-						{
-							if (lightState.mPathLength + 1 >= mMinPathLength)
-								ConnectToCamera(pathIdx, lightState, hitPoint, bsdf, mLightVertices.back().mMisData.mRaySamplePdfsRatio);
-						}
-
 						// Terminate if the path would become too long after scattering
 						if (lightState.mPathLength + 2 > mMaxPathLength)
 							break;
@@ -470,11 +485,11 @@ public:
 			if (mMaxPathLength > 1)
 			{
 				//////////////////////////////////////////////////////////////////////////
-				// Build acceleration structure for BB1D
+				// Build acceleration structure for PTPB1D
 				//////////////////////////////////////////////////////////////////////////
-				if (mMergeWithLightVerticesBB1D && !mPhotonBeamsArray.empty())
+				if (mMergeWithLightVerticesPTPB1D && !mPhotonBeamsArray.empty())
 				{
-					Evaluator.build(mPhotonBeamsArray, mBB1DRadiusCalculation, mBB1DRadius, mBB1DRadiusKNN, mVerbose);
+					Evaluator.build(mPhotonBeamsArray, mPTPB1DRadiusCalculation, mPTPB1DRadius, mPTPB1DRadiusKNN, mVerbose);
 
 					// Set beam selection PDFs according to the built structure
 					if (Evaluator.sMaxBeamsInCell)
@@ -509,10 +524,11 @@ public:
 				// Medium of the previous vertex
 				const AbstractMedium* lastMedium = NULL;
 
-				bool stopBB1D = false;
+				bool stopPTPB1D = false;
 				float time = 0;
 				//////////////////////////////////////////////////////////////////////
 				// Trace camera path
+				float ior = 1;
 				for (;; ++cameraState.mPathLength)
 				{
 					// Prepare ray
@@ -527,15 +543,15 @@ public:
 						//UPBP_ASSERT(!mScene.GetGlobalMediumPtr()->HasScattering());			
 
 						// Vertex merging: beam x beam 1D
-						if (mMergeWithLightVerticesBB1D && !mPhotonBeamsArray.empty() && !stopBB1D)
+						if (mMergeWithLightVerticesPTPB1D && !mPhotonBeamsArray.empty() && !stopPTPB1D)
 						{
 							uint estimatorTechniques = mEstimatorTechniques;
 							//if (!cameraState.mSpecularPath) estimatorTechniques |= BEAM_REDUCTION;
-							embree::AdditionalRayDataForMis data(&mLightVertices, &mPathEnds, &mCameraVerticesMisData, cameraState.mPathLength, mMinPathLength, mMaxPathLength, mQueryBeamType, mPhotonBeamType, cameraState.mLastPdfWInv, 0, 0, 0, mBB1DMisWeightFactor, !mPhotonBeamsArray.empty() ? &Evaluator : NULL, mBB1DMinMFP, mBB1DUsedLightSubPathCount, mMinDistToMed, 0.0f, 0.0f, 0, &mDebugImages);
-							const Rgb contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments,time, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+							embree::AdditionalRayDataForMis data(&mLightVertices, &mPathEnds, &mCameraVerticesMisData, cameraState.mPathLength, mMinPathLength, mMaxPathLength, mQueryBeamType, mPhotonBeamType, cameraState.mLastPdfWInv, 0, 0, 0, mPTPB1DMisWeightFactor, !mPhotonBeamsArray.empty() ? &Evaluator : NULL, mPTPB1DMinMFP, mPTPB1DUsedLightSubPathCount, mMinDistToMed, 0.0f, 0.0f, 0, &mDebugImages);
+							const Rgb contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments,time,ior, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 							//const Rgb contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 
-							const Rgb mult = cameraState.mThroughput * mBB1DNormalization;
+							const Rgb mult = cameraState.mThroughput * mPTPB1DNormalization;
 							color += mult * contrib;
 						}
 
@@ -552,9 +568,6 @@ public:
 						if (mScene.GetGlobalMediumPtr()->HasAttenuation())
 							break;
 
-						// Stop if we are in the light sampling mode and could have sampled this light last time in the next event estimation
-						if (mAlgorithm == kPTls && cameraState.mPathLength > 1 && !cameraState.mLastSpecular)
-							break;
 
 						// Attenuate by intersected media (if any)
 						float raySamplePdf(1.0f);
@@ -586,8 +599,6 @@ public:
 						mCameraVerticesMisData[cameraState.mPathLength].mRaySamplePdfsRatio = 0.0f;
 						mCameraVerticesMisData[cameraState.mPathLength].mSinTheta = 0.0f;
 						mCameraVerticesMisData[cameraState.mPathLength].mCosThetaOut = 0.0f;
-						mCameraVerticesMisData[cameraState.mPathLength].mSurfMisWeightFactor = 0.0f;
-						mCameraVerticesMisData[cameraState.mPathLength].mPP3DMisWeightFactor = 0.0f;
 						mCameraVerticesMisData[cameraState.mPathLength].mPB2DMisWeightFactor = 0.0f;
 						mCameraVerticesMisData[cameraState.mPathLength].mBB1DMisWeightFactor = 0.0f;
 						mCameraVerticesMisData[cameraState.mPathLength].mBB1DBeamSelectionPdf = 0.0f;
@@ -616,8 +627,7 @@ public:
 						break;
 					}
 					UPBP_ASSERT(isect.IsValid());
-
-					auto ior = mScene.RelativeIOR(isect, cameraState.mBoundaryStack);
+					ior = mScene.RelativeIOR(isect, cameraState.mBoundaryStack);
 					originInMedium = isect.IsInMedium();
 					float speed = mDefaultLightSpeed;
 					if (originInMedium) {
@@ -627,27 +637,25 @@ public:
 					////////////////////////////////////////////////////////////////
 					// Vertex merging: beam x beam 1D
 
-					if (mMergeWithLightVerticesBB1D && !mPhotonBeamsArray.empty() && !stopBB1D)
+					if (mMergeWithLightVerticesPTPB1D && !mPhotonBeamsArray.empty() && !stopPTPB1D)
 					{
 						mDebugImages.ResetAccum();
 						Rgb contrib(0);
 						uint estimatorTechniques = mEstimatorTechniques;
 						//if (!cameraState.mSpecularPath) estimatorTechniques |= BEAM_REDUCTION;
-						embree::AdditionalRayDataForMis data(&mLightVertices, &mPathEnds, &mCameraVerticesMisData, cameraState.mPathLength, mMinPathLength, mMaxPathLength, mQueryBeamType, mPhotonBeamType, cameraState.mLastPdfWInv, 0, 0, 0, mBB1DMisWeightFactor, !mPhotonBeamsArray.empty() ? &Evaluator : NULL, mBB1DMinMFP, mBB1DUsedLightSubPathCount, mMinDistToMed, 0.0f, 0.0f, 0, &mDebugImages);
+						embree::AdditionalRayDataForMis data(&mLightVertices, &mPathEnds, &mCameraVerticesMisData, cameraState.mPathLength, mMinPathLength, mMaxPathLength, mQueryBeamType, mPhotonBeamType, cameraState.mLastPdfWInv, 0, 0, 0, mPTPB1DMisWeightFactor, !mPhotonBeamsArray.empty() ? &Evaluator : NULL, mPTPB1DMinMFP, mPTPB1DUsedLightSubPathCount, mMinDistToMed, 0.0f, 0.0f, 0, &mDebugImages);
 						if (isect.IsOnSurface())
-							contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments, time, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+							contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments, time,ior, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 						else
-							contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mLiteVolumeSegments, time, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
+							contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mLiteVolumeSegments, time,ior, estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 						//if (isect.IsOnSurface())
 						//	contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mVolumeSegments,  estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
 						//else
 						//	contrib = Evaluator.evalBeamBeamEstimate(mQueryBeamType, ray, mLiteVolumeSegments,  estimatorTechniques, originInMedium ? AbstractMedium::kOriginInMedium : 0, &data);
-						const Rgb mult = cameraState.mThroughput * mBB1DNormalization;
+						const Rgb mult = cameraState.mThroughput * mPTPB1DNormalization;
 
 						color += mult * contrib;
-						mDebugImages.addAccumulatedLightSample(cameraState.mPathLength, DebugImages::BB1D, screenSample, mult);
 					}
-
 					// Attenuate by intersected media (if any)
 					float raySamplePdf(1.0f);
 					float raySampleRevPdf(1.0f);
@@ -689,12 +697,12 @@ public:
 						mCameraVerticesMisData[cameraState.mPathLength].mRaySampleRevPdfInv = 1.0f;
 						mCameraVerticesMisData[cameraState.mPathLength].mSinTheta = 0.0f;
 						mCameraVerticesMisData[cameraState.mPathLength].mCosThetaOut = 0.0f;
-						mCameraVerticesMisData[cameraState.mPathLength].mBB1DMisWeightFactor = bsdf.IsOnSurface() ? 0.0f : mBB1DMisWeightFactor;
-						mCameraVerticesMisData[cameraState.mPathLength].mBB1DBeamSelectionPdf = bsdf.IsOnSurface() ? 0.0f : ((mMergeWithLightVerticesBB1D && !mPhotonBeamsArray.empty() && Evaluator.sMaxBeamsInCell) ? Evaluator.getBeamSelectionPdf(hitPoint) : 1.0f);
+						mCameraVerticesMisData[cameraState.mPathLength].mBB1DMisWeightFactor = bsdf.IsOnSurface() ? 0.0f : mPTPB1DMisWeightFactor;
+						mCameraVerticesMisData[cameraState.mPathLength].mBB1DBeamSelectionPdf = bsdf.IsOnSurface() ? 0.0f : ((mMergeWithLightVerticesPTPB1D && !mPhotonBeamsArray.empty() && Evaluator.sMaxBeamsInCell) ? Evaluator.getBeamSelectionPdf(hitPoint) : 1.0f);
 						mCameraVerticesMisData[cameraState.mPathLength].mIsDelta = isect.mLightID >= 0 ? false : bsdf.IsDelta();
 						mCameraVerticesMisData[cameraState.mPathLength].mIsOnLightSource = isect.mLightID >= 0;
 						mCameraVerticesMisData[cameraState.mPathLength].mIsSpecular = false;
-						mCameraVerticesMisData[cameraState.mPathLength].mInMediumWithBeams = bsdf.IsOnSurface() ? false : (bsdf.GetMedium()->GetMeanFreePath(hitPoint) > mBB1DMinMFP);
+						mCameraVerticesMisData[cameraState.mPathLength].mInMediumWithBeams = bsdf.IsOnSurface() ? false : (bsdf.GetMedium()->GetMeanFreePath(hitPoint) > mPTPB1DMinMFP);
 
 						mCameraVerticesMisData[cameraState.mPathLength].mRaySamplePdfsRatio = 0.0f;
 						mCameraVerticesMisData[cameraState.mPathLength].mRaySampleRevPdfsRatio = 0.0f;
@@ -734,10 +742,6 @@ public:
 						if (cameraState.mPathLength < mMinPathLength)
 							break;
 
-						// Stop if we are in the light sampling mode and could have sampled this light last time in the next event estimation
-						if (mAlgorithm == kPTls && cameraState.mPathLength > 1 && !cameraState.mLastSpecular)
-							break;
-
 						// Get hit light
 						const AbstractLight* light = mScene.GetLightPtr(isect.mLightID);
 						UPBP_ASSERT(light);
@@ -758,70 +762,7 @@ public:
 					// Ignore contribution of primary rays from medium too close to camera
 					if (cameraState.mPathLength > 1 || bsdf.IsOnSurface() || isect.mDist >= mMinDistToMed)
 					{
-						////////////////////////////////////////////////////////////////
-						// Vertex connection: Connect to a light source
-						if (mConnectToLightSource && !bsdf.IsDelta() && cameraState.mPathLength + 1 >= mMinPathLength && mScene.GetLightCount() > 0 && (bsdf.IsInMedium()))
-						{
-							color += cameraState.mThroughput *
-								DirectIllumination(cameraState, hitPoint, bsdf);
-						}
 
-						////////////////////////////////////////////////////////////////
-						// Vertex connection: Connect to light vertices
-						if (mConnectToLightVertices && !bsdf.IsDelta() && !mLightVertices.empty() && (bsdf.IsInMedium()))
-						{
-							// Determine whether the vertex is in medium behind real geometry
-							bool behindSurf = false;
-							if (bsdf.IsInMedium() && !cameraState.mBoundaryStack.IsEmpty())
-							{
-								int matId = cameraState.mBoundaryStack.Top().mMaterialId;
-								if (matId >= 0)
-								{
-									const Material& mat = mScene.GetMaterial(matId);
-									if (mat.mGeometryType != GeometryType::IMAGINARY)
-										behindSurf = true;
-								}
-							}
-
-							int pathIdxMod = mRng.GetUint() % pathCountL;
-
-							// For VC, each light sub-path is assigned to a particular eye
-							// sub-path, as in traditional BPT. It is also possible to
-							// connect to vertices from any light path, but MIS should
-							// be revisited.
-							const Vec2i range(
-								(pathIdxMod == 0) ? 0 : mPathEnds[pathIdxMod - 1],
-								mPathEnds[pathIdxMod]);
-
-							for (int i = range[0]; i < range[1]; i++)
-							{
-								const UPBPLightVertex& lightVertex = mLightVertices[i];
-
-								if (lightVertex.mPathLength + 1 +
-									cameraState.mPathLength < mMinPathLength)
-									continue;
-
-								// Light vertices are stored in increasing path length
-								// order; once we go above the max path length, we can
-								// skip the rest
-								if (lightVertex.mPathLength + 1 +
-									cameraState.mPathLength > mMaxPathLength)
-									break;
-
-								// We store all light vertices in order to compute MIS weights but not all can be used for VC
-								if (!lightVertex.mConnectable)
-									continue;
-
-								// Don't try connect vertices in different media with real geometry
-								if (lightVertex.mBSDF.IsInMedium() && bsdf.IsInMedium() && lightVertex.mBSDF.GetMedium() != bsdf.GetMedium()
-									&& (lightVertex.mBehindSurf || behindSurf))
-									continue;
-
-								const Rgb mult = cameraState.mThroughput * lightVertex.mThroughput;
-								auto conn = ConnectVertices(lightVertex, bsdf, hitPoint, cameraState);
-								color += mult * conn;
-							}
-						}
 
 					}
 
@@ -837,7 +778,7 @@ public:
 								break;
 
 							if (mEstimatorTechniques & BB1D_PREVIOUS)
-								stopBB1D = true;
+								stopPTPB1D = true;
 						}
 
 						lastMedium = NULL;
@@ -848,7 +789,7 @@ public:
 							break;
 
 						if (mEstimatorTechniques & BB1D_PREVIOUS)
-							stopBB1D = true;
+							stopPTPB1D = true;
 
 						lastMedium = bsdf.GetMedium();
 					}
@@ -862,7 +803,7 @@ public:
 
 		mCameraTracingTime += mTimer.GetLastElapsedTime();
 		// Delete stored photon beams
-		if (mMergeWithLightVerticesBB1D && mMaxPathLength > 1 && !mPhotonBeamsArray.empty())
+		if (mMergeWithLightVerticesPTPB1D && mMaxPathLength > 1 && !mPhotonBeamsArray.empty())
 		{
 			Evaluator.destroy();
 		}
@@ -962,19 +903,6 @@ private:
 
 		// MIS weight
 		float misWeight = 1.f;
-		if (mConnectToLightVertices)
-		{
-			UPBP_ASSERT(directPdfA > 0);
-			const float wCamera = AccumulateCameraPathWeight2(aCameraState.mPathLength, directPdfA, 0, 0, 0, emissionPdfW / directPdfA);
-			misWeight = 1.0f / (wCamera + 1.f);
-		}
-		else if (mAlgorithm == kPTmis && !aCameraState.mLastSpecular)
-		{
-			const float wCamera = directPdfA * mCameraVerticesMisData[aCameraState.mPathLength].mPdfAInv;
-			misWeight = 1.0f / (wCamera + 1.f);
-		}
-
-		mDebugImages.setTempRgbWeight(radiance, misWeight);
 		return misWeight * radiance;
 	}
 
@@ -1060,57 +988,12 @@ private:
 
 			// MIS weight
 			float misWeight = 1.f;
-			if (mConnectToLightVertices)
-			{
-				float lastSinTheta = 0;
-				float lastRaySampleRevPdfInv = 0;
-				float lastRaySampleRevPdfsRatio = 0;
-				if (aCameraBSDF.IsInMedium())
-				{
-					lastSinTheta = sinTheta;
-					lastRaySampleRevPdfInv = 1.0f / nextRaySampleRevPdf;
-					lastRaySampleRevPdfsRatio = mCameraVerticesMisData[aCameraState.mPathLength].mRaySamplePdfsRatio;
-					if (!aCameraBSDF.GetMedium()->IsHomogeneous())
-					{
-						float firstSegmentRayOverSampleRevPdf;
-						aCameraBSDF.GetMedium()->RaySamplePdf(Ray(aCameraState.mOrigin, aCameraState.mDirection), mVolumeSegments.front().mDistMin, mVolumeSegments.front().mDistMax, 0, &firstSegmentRayOverSampleRevPdf);
-						const float firstSegmentRayInSampleRevPdf = mVolumeSegments.front().mRaySampleRevPdf; // We are in medium -> we know we have insampled
-						lastRaySampleRevPdfsRatio = firstSegmentRayOverSampleRevPdf / firstSegmentRayInSampleRevPdf;
-					}
-				}
-
-				// For wCamera we need ratio = emissionPdfA / directPdfA,
-				// with emissionPdfA being the product of the PDFs for choosing the
-				// point on the light source and sampling the outgoing direction.
-				// What we are given by the light source instead are emissionPdfW
-				// and directPdfW. Converting to area PDFs and plugging into ratio:
-				//    emissionPdfA = emissionPdfW * cosToLight / dist^2
-				//    directPdfA   = directPdfW * cosAtLight / dist^2
-				//    ratio = (emissionPdfW * cosToLight / dist^2) / (directPdfW * cosAtLight / dist^2)
-				//    ratio = (emissionPdfW * cosToLight) / (directPdfW * cosAtLight)
-				// Also note that both emissionPdfW and directPdfW should be
-				// multiplied by lightPickProb, so it cancels out.
-				UPBP_ASSERT(nextRaySampleRevPdf * emissionPdfW * cosToLight / (directPdfW * cosAtLight) > 0);
-				const float wCamera = AccumulateCameraPathWeight2(aCameraState.mPathLength, nextRaySampleRevPdf * emissionPdfW * cosToLight / (directPdfW * cosAtLight), lastSinTheta, lastRaySampleRevPdfInv, lastRaySampleRevPdfsRatio, bsdfRevPdfW);
-
-				// Note that wLight is a ratio of area PDFs. But since both are on the
-				// light source, their distance^2 and cosine terms cancel out.
-				// Therefore we can write wLight as a ratio of solid angle PDFs,
-				// both expressed w.r.t. the same shading point.
-				const float wLight = light->IsDelta() ? 0 : (nextRaySamplePdf * bsdfDirPdfW) / (directPdfW * lightPickProb);
-				misWeight = 1.0f / (wCamera + 1.f + wLight);
-			}
-			else if (mAlgorithm != kPTls && !light->IsDelta())
-				misWeight = Mis2(lightPickProb * directPdfW, bsdfDirPdfW * nextRaySamplePdf);
-
 			contrib = (cosToLight / (lightPickProb * directPdfW)) * (radiance * nextAttenuation * bsdfFactor);
-			mDebugImages.setTempRgbWeight(contrib, misWeight);
 			contrib *= misWeight;
 		}
 
 		if (contrib.isBlackOrNegative())
 		{
-			mDebugImages.ResetTemp();
 			return Rgb(0);
 		}
 
@@ -1422,28 +1305,27 @@ private:
 
 			// Compute MIS weight if not doing LT
 			float misWeight = 1.f;
-			if (mAlgorithm != kLT)
+
+			float lastSinTheta = 0;
+			float lastRaySampleRevPdfInv = 0;
+			float lastRaySampleRevPdfsRatio = 0;
+			if (aLightBSDF.IsInMedium())
 			{
-				float lastSinTheta = 0;
-				float lastRaySampleRevPdfInv = 0;
-				float lastRaySampleRevPdfsRatio = 0;
-				if (aLightBSDF.IsInMedium())
+				lastSinTheta = sinTheta;
+				lastRaySampleRevPdfInv = 1.0f / raySampleRevPdf;
+				lastRaySampleRevPdfsRatio = aRaySampleRevPdfsRatio;
+				if (!aLightBSDF.GetMedium()->IsHomogeneous())
 				{
-					lastSinTheta = sinTheta;
-					lastRaySampleRevPdfInv = 1.0f / raySampleRevPdf;
-					lastRaySampleRevPdfsRatio = aRaySampleRevPdfsRatio;
-					if (!aLightBSDF.GetMedium()->IsHomogeneous())
-					{
-						float firstSegmentRayOverSampleRevPdf;
-						aLightBSDF.GetMedium()->RaySamplePdf(Ray(aLightState.mOrigin, aLightState.mDirection), mVolumeSegments.front().mDistMin, mVolumeSegments.front().mDistMax, 0, &firstSegmentRayOverSampleRevPdf);
-						const float firstSegmentRayInSampleRevPdf = mVolumeSegments.front().mRaySampleRevPdf; // We are in medium -> we know we have insampled
-						lastRaySampleRevPdfsRatio = firstSegmentRayOverSampleRevPdf / firstSegmentRayInSampleRevPdf;
-					}
+					float firstSegmentRayOverSampleRevPdf;
+					aLightBSDF.GetMedium()->RaySamplePdf(Ray(aLightState.mOrigin, aLightState.mDirection), mVolumeSegments.front().mDistMin, mVolumeSegments.front().mDistMax, 0, &firstSegmentRayOverSampleRevPdf);
+					const float firstSegmentRayInSampleRevPdf = mVolumeSegments.front().mRaySampleRevPdf; // We are in medium -> we know we have insampled
+					lastRaySampleRevPdfsRatio = firstSegmentRayOverSampleRevPdf / firstSegmentRayInSampleRevPdf;
 				}
-				UPBP_ASSERT(raySampleRevPdf * cameraPdfA > 0);
-				const float wLight = AccumulateLightPathWeight2(aLightPathIdx, aLightState.mPathLength, raySampleRevPdf * cameraPdfA, lastSinTheta, lastRaySampleRevPdfInv, lastRaySampleRevPdfsRatio, bsdfRevPdfW, BPT, true) / mScreenPixelCount;
-				misWeight = 1.0f / (1.f + wLight);
 			}
+			UPBP_ASSERT(raySampleRevPdf * cameraPdfA > 0);
+			const float wLight = AccumulateLightPathWeight2(aLightPathIdx, aLightState.mPathLength, raySampleRevPdf * cameraPdfA, lastSinTheta, lastRaySampleRevPdfInv, lastRaySampleRevPdfsRatio, bsdfRevPdfW, BPT, true) / mScreenPixelCount;
+			misWeight = 1.0f / (1.f + wLight);
+			
 
 			// We divide the contribution by surfaceToImageFactor to convert the (already
 			// divided) PDF from surface area to image plane area, w.r.t. which the
@@ -1487,7 +1369,7 @@ private:
 				PTPBBeam beam;
 				//PhotonBeam beam;
 				beam.mMedium = mScene.mMedia[it->mMediumID];
-				if (beam.mMedium->HasScattering() && (beam.mMedium->GetMeanFreePath(aRay.origin) > mBB1DMinMFP))
+				if (beam.mMedium->HasScattering() && (beam.mMedium->GetMeanFreePath(aRay.origin) > mPTPB1DMinMFP))
 				{
 					beam.mRay = Ray(aRay.origin + aRay.direction * it->mDistMin, aRay.direction);
 					beam.mLength = it->mDistMax - it->mDistMin;
@@ -1518,7 +1400,7 @@ private:
 				PTPBBeam beam;
 				//PhotonBeam beam;
 				beam.mMedium = mScene.mMedia[it->mMediumID];
-				if (beam.mMedium->HasScattering() && (beam.mMedium->GetMeanFreePath(aRay.origin) > mBB1DMinMFP))
+				if (beam.mMedium->HasScattering() && (beam.mMedium->GetMeanFreePath(aRay.origin) > mPTPB1DMinMFP))
 				{
 					beam.mRay = Ray(aRay.origin + aRay.direction * it->mDistMin, aRay.direction);
 					beam.mLength = it->mDistMax - it->mDistMin;
@@ -1663,29 +1545,25 @@ private:
 	// Flags controlling computation according to the selected algorithm type
 	bool mTraceLightPaths;
 	bool mTraceCameraPaths;
-	bool mConnectToCamera;
-	bool mConnectToLightSource;
-	bool mConnectToLightVertices;
-	bool mMergeWithLightVerticesBB1D;
+	bool mMergeWithLightVerticesPTPB1D;
 
 	// Flags of used estimator techniques (used when calling methods from outside)
 	uint mEstimatorTechniques;
 
-	// BB1D
-	float                mBB1DMisWeightFactor;       // Weight factor of BB1D
-	float                mBB1DNormalization;         // 1 / bb1d_light_path_count
+	// PTPB1D
+	float                mPTPB1DMisWeightFactor;       // Weight factor of PTPB1D
+	float                mPTPB1DNormalization;         // 1 / bb1d_light_path_count
 	PTPBEvaluator		 Evaluator;           // Encapsulates evaluating contributions of their intersections with beams
-	float                mBB1DRadius;         // Initial merging radius
-	float                mBB1DTime;
+	float                mPTPB1DRadius;         // Initial merging radius
+	float                mPTPB1DTime;
 	float				 mDefaultLightSpeed=300000;
-	float                mBB1DRadiusAlpha;     	// Radius reduction rate parameter
-	RadiusCalculation    mBB1DRadiusCalculation;     // Type of photon radius calculation
-	int	                 mBB1DRadiusKNN;             // Value x means that x-th closest beam vertex will be used for calculation of cone radius at the current beam vertex
-	float                mBB1DMinMFP;                // Minimum MFP of medium to store photon beams in it
+	RadiusCalculation    mPTPB1DRadiusCalculation;     // Type of photon radius calculation
+	int	                 mPTPB1DRadiusKNN;             // Value x means that x-th closest beam vertex will be used for calculation of cone radius at the current beam vertex
+	float                mPTPB1DMinMFP;                // Minimum MFP of medium to store photon beams in it
 	BeamType             mPhotonBeamType;            // Short/long beam
 	BeamType             mQueryBeamType;            // Short/long beam
-	float                mBB1DUsedLightSubPathCount; // First mBB1DUsedLightSubPathCount out of mLightSubPathCount light paths will generate photon beams
-	float                mBB1DBeamStorageFactor;     // Factor used for computation of minimum MFP of media where photon beams are used. The lower it is the denser media will use photon beams.
+	float                mPTPB1DUsedLightSubPathCount; // First mPTPB1DUsedLightSubPathCount out of mLightSubPathCount light paths will generate photon beams
+	float                mPTPB1DBeamStorageFactor;     // Factor used for computation of minimum MFP of media where photon beams are used. The lower it is the denser media will use photon beams.
 
 	float mScreenPixelCount;         // Number of pixels
 	float mLightSubPathCount;        // Number of light sub-paths
@@ -1705,9 +1583,6 @@ private:
 	// For light path belonging to pixel index [x] it stores
 	// where it's light vertices end (begin is at [x-1])
 	std::vector<int> mPathEnds;
-
-	// Used algorithm
-	AlgorithmType mAlgorithm;
 
 	// Random number generator
 	Rng mRng;
